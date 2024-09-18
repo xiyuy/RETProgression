@@ -16,7 +16,8 @@ def run(config):
     from utils import train_model
 
     # load datasets
-    joslin_data = {x: JoslinData(annotations_file="labels_" + x + ".csv",
+    joslin_data = {x: JoslinData(data_dir=config.pretrain.data.data_dir,
+                                 annotations_file="labels_" + x + ".csv",
                                  img_dir="images") for x in ["train", "val"]}
     joslin_dataloaders = {x: DataLoader(joslin_data[x],
                                         batch_size=config.data.batch_size,
