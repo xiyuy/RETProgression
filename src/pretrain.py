@@ -16,17 +16,17 @@ def run(config):
     from utils import train_model
 
     # load datasets
-    joslin_data = {x: JoslinData(data_dir=config.pretrain.data.data_dir,
-                                 annotations_file="labels_" + x + ".csv",
-                                 img_dir="images") for x in ["train", "val"]}
+    joslin_data = {x: JoslinData(data_dir=conf.pretrain.data.data_dir,
+                                 annotations_file="multiclass_labels_" + x + ".csv",
+                                 img_dir="joslin_img") for x in ["train", "test"]}
     joslin_dataloaders = {x: DataLoader(joslin_data[x],
                                         batch_size=config.data.batch_size,
                                         shuffle=config.data.shuffle,
-                                        num_workers=config.data.num_workers) for x in ["train", "val"]}
+                                        num_workers=config.data.num_workers) for x in ["train", "test"]}
 
-    dataset_sizes = {x: len(joslin_data[x]) for x in ["train", "val"]}
+    dataset_sizes = {x: len(joslin_data[x]) for x in ["train", "test"]}
     print("Train dataset size:", dataset_sizes["train"])
-    print("Validation dataset size:", dataset_sizes["val"])
+    print("Test dataset size:", dataset_sizes["test"])
 
     class_names = joslin_data["train"].classes
     print("Class names:", class_names)

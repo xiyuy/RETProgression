@@ -2,7 +2,7 @@ exp:
   num_epochs: 25
 
 data:
-  data_dir: "home/yang.xiyu/data"
+  data_dir: "/work_encrypted/retprogression/data"
   batch_size: 16
   shuffle: True
   num_workers: 2
