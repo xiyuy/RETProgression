@@ -1,7 +1,7 @@
 import hydra
 
 
-@hydra.main(config_path='conf', config_name='pretrain', version_base=1.3)
+@hydra.main(config_path='conf', config_name='pretrain', version_base="1.3")
 def run(config):
     # deferred imports for faster tab completion
     import torch
