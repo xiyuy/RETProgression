@@ -1,7 +1,7 @@
 import hydra
 
 
-@hydra.main(config_path='conf', config_name='pretrain', version_base="1.3")
+@hydra.main(config_path='config', config_name='pretrain', version_base="1.3")
 def run(config):
     # deferred imports for faster tab completion
     import torch
@@ -16,7 +16,7 @@ def run(config):
     from utils import train_model
 
     # load datasets
-    joslin_data = {x: JoslinData(data_dir=conf.pretrain.data.data_dir,
+    joslin_data = {x: JoslinData(data_dir=config.pretrain.data.data_dir,
                                  annotations_file="multiclass_labels_" + x + ".csv",
                                  img_dir="joslin_img") for x in ["train", "test"]}
     joslin_dataloaders = {x: DataLoader(joslin_data[x],
