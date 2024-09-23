@@ -2,7 +2,7 @@ exp:
   num_epochs: 25
 
 data:
-  data_dir: "/work_encrypted/retprogression/data"
+  data_dir: "../../../../../work_encrypted/retprogression/data"
   annotations_file_name: "multiclass_labels_" 
   batch_size: 16
   shuffle: True
