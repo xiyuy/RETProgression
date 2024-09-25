@@ -27,9 +27,9 @@ def run(config):
     dataset_sizes = {x: len(joslin_data[x]) for x in ["train", "test"]}
     print("Train dataset size:", dataset_sizes["train"])
     print("Test dataset size:", dataset_sizes["test"])
-
-    class_names = joslin_data["train"].classes
-    print("Class names:", class_names)
+    
+    # class_names = joslin_data["train"].classes
+    # print("Class names:", class_names)
 
     # model training
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -39,7 +39,7 @@ def run(config):
                          num_classes=config.model.num_classes)
     model = model.to(device)
 
-    if config.criterion == "cross_entropy":
+    if config.criterion.name == "cross_entropy":
         criterion = nn.CrossEntropyLoss()
 
     # Observe that all parameters are being optimized

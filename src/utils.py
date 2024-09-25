@@ -26,36 +26,43 @@ def train_model(dataloaders, dataset_sizes, model, criterion,
                 if phase == 'train':
                     model.train()  # Set model to training mode
                 else:
+                    print('eval start')
                     model.eval()   # Set model to evaluate mode
+                    print('eval end')
 
                 running_loss = 0.0
                 running_corrects = 0
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
+                    print(labels)
                     inputs = inputs.to(device)
                     labels = labels.to(device)
-
+                    print('to device done')
                     # zero the parameter gradients
                     optimizer.zero_grad()
 
                     # forward
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
+                        print('model start')
                         outputs = model(inputs)
                         _, preds = torch.max(outputs, 1)
                         loss = criterion(outputs, labels)
+                        print('train loss')
 
                         # backward + optimize only if in training phase
                         if phase == 'train':
                             loss.backward()
                             optimizer.step()
+                            print('train back')
 
                     # statistics
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
                 if phase == 'train':
                     scheduler.step()
+                    print('train sched')
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
