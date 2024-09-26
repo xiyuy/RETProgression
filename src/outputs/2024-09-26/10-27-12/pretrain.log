@@ -1,0 +1,5 @@
+[2024-09-26 10:27:22,677][numexpr.utils][INFO] - Note: NumExpr detected 28 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+[2024-09-26 10:27:22,678][numexpr.utils][INFO] - NumExpr defaulting to 8 threads.
+[2024-09-26 10:27:23,952][timm.models._builder][INFO] - Loading pretrained weights from Hugging Face hub (timm/resnet50.a1_in1k)
+[2024-09-26 10:27:24,074][timm.models._hub][INFO] - [timm/resnet50.a1_in1k] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+[2024-09-26 10:27:24,150][timm.models._builder][INFO] - Missing keys (fc.weight, fc.bias) discovered while loading pretrained weights. This is expected if model is being adapted.

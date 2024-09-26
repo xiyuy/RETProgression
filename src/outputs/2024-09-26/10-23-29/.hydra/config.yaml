@@ -1,0 +1,22 @@
+exp:
+  num_epochs: 25
+data:
+  data_dir: /work_encrypted/retprogression/data
+  annotations_file_name: multiclass_labels_
+  batch_size: 16
+  shuffle: true
+  num_workers: 2
+model:
+  name: resnet50.a1_in1k
+  num_classes: 5
+  pretrained: true
+criterion:
+  name: cross_entropy
+optimizer:
+  name: adam
+  lr: 0.0001
+  weight_decay: 0.0001
+  momentum: 0.9
+lr_scheduler:
+  step_size: 7
+  gamma: 0.1
