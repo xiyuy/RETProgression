@@ -35,6 +35,7 @@ def train_model(dataloaders, dataset_sizes, model, criterion,
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
+                    print('label values:')
                     print(labels)
                     inputs = inputs.to(device)
                     labels = labels.to(device)
@@ -46,6 +47,13 @@ def train_model(dataloaders, dataset_sizes, model, criterion,
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
                         print('model start')
+                        ## To be deleted ##
+                        print('inputs in device:')
+                        print('inputs shape:')
+                        print(inputs.shape)
+                        print('inputs values:')
+                        print(torch.unique(inputs))
+                        ## To be deleted ##
                         outputs = model(inputs)
                         _, preds = torch.max(outputs, 1)
                         loss = criterion(outputs, labels)
