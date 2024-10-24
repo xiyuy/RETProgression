@@ -1,15 +1,15 @@
 exp:
-  num_epochs: 25
+  num_epochs: 10
 
 data:
-  data_dir: "home/yang.xiyu/data"
-  batch_size: 16
+  data_dir: "/content/drive/My Drive/split_dataset"
+  batch_size: 2
   shuffle: True
-  num_workers: 2
+  num_workers: 1
 
 model:
-  name: resnet50.a1_in1k
-  num_classes: 5
+  name: resnet18.a1_in1k
+  num_classes: 6
   pretrained: True
 
 criterion:
