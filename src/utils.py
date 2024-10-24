@@ -33,8 +33,8 @@ def train_model(dataloaders, dataset_sizes, model, criterion,
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
-                    inputs = inputs.to(device)
-                    labels = labels.to(device)
+                    inputs = inputs.to(device).float() 
+                    labels = labels.to(device).long()
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
