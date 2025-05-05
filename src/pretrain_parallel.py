@@ -15,7 +15,7 @@ from utils_parallel import train_model_custom_progress, CachedDataset
 import time 
 import sys 
 import numpy as np
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score
+from custom_metrics import roc_auc_score, balanced_accuracy_score
 
 def safe_clear_directory(directory_path, logger=None): 
     """

@@ -9,7 +9,7 @@ import torch.distributed as dist
 from torch.amp import GradScaler, autocast 
 from collections import defaultdict 
 import numpy as np
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score
+from custom_metrics import roc_auc_score, balanced_accuracy_score
 
 # Improved caching mechanism with per-process storage
 class ProcessLocalCache: 
