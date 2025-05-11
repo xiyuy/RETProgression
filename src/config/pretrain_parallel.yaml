@@ -1,0 +1,62 @@
+# pretrain_parallel.yaml
+distributed: 
+  world_size: 1 # Maximum number of GPUs to use
+  backend: nccl # Backend to use for distributed training
+
+exp: 
+  num_epochs: 5  # Increased from 2 to 5 epochs
+  checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_test"
+  checkpoint_name: null # "epoch_7.pth"
+  checkpoint_freq: 1 # Save checkpoints every N epochs
+
+data: 
+  data_dir: "/work/retprogression"
+  annotations_file_name: "referable_img_grades_"
+  class_labels: "referable_binary_DR"
+  batch_size: 64 # Reduced batch size per GPU for more efficient multi-GPU training
+  shuffle: True
+  num_workers: 7 # Increased from 4 to 7 per GPU for better data loading performance
+
+caching: 
+  enabled: True
+  train_cache_size: 1000 # Cache 1000 images
+  val_cache_size: 1000 # Cache 1000 images
+  prefetch_factor: 4 # Increased from 2 to 4 for improved prefetching
+
+model: 
+  name: vit_base_patch16_224 # ResNet50: resnet50.a1_in1k
+  num_classes: 2
+  pretrained: True
+
+criterion: 
+  name: cross_entropy
+  class_weights: True  # Enable class weighting for imbalanced dataset (93:7)
+
+optimizer: 
+  name: adam
+  lr: 0.00005  # Lowered learning rate from 0.0001 to 0.00005
+  weight_decay: 0.001  # Increased weight decay from 0.0005 to 0.001
+  momentum: 0.9
+
+lr_scheduler: 
+  step_size: 7
+  gamma: 0.1
+
+optimization: 
+  amp_enabled: True # Enable automatic mixed precision
+  gradient_clipping: 1.0 # Max gradient norm for gradient clipping
+  gradient_accumulation_steps: 2 # Accumulate gradients to reduce communication
+  sync_bn: False # Synchronize batch normalization stats across GPUs
+  drop_last: True # Drop incomplete batches to avoid small batch issues
+
+# Early stopping configuration
+early_stopping:
+  enabled: True
+  patience: 5  # Number of epochs with no improvement after which training will be stopped
+  metric: balanced_accuracy  # Metric to monitor for early stopping
+  mode: max  # Whether to maximize or minimize the monitored metric
+  min_delta: 0.001  # Minimum change to qualify as an improvement
+
+# Profiling disabled to avoid PyTorch internal error
+profiling: 
+  enabled: False

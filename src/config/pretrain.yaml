@@ -1,0 +1,31 @@
+# pretrain.yaml
+exp:
+  num_epochs: 5
+  checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/DR_binary_classification"
+  checkpoint_name: null # "epoch_7.pth"
+
+data:
+  data_dir: "/work/retprogression"
+  annotations_file_name: "binary_img_grades_"
+  class_labels: "binary_DR"
+  batch_size: 64
+  shuffle: True
+  num_workers: 4
+
+model:
+  name: resnet50.a1_in1k
+  num_classes: 2
+  pretrained: True
+
+criterion:
+  name: cross_entropy
+
+optimizer:
+  name: adam
+  lr: 0.0001
+  weight_decay: 0.0005
+  momentum: 0.9
+
+lr_scheduler:
+  step_size: 7
+  gamma: 0.1
