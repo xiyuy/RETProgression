@@ -1,46 +1,61 @@
-# pretrain_parallel.yaml
+# Base configuration for all experiments
 distributed: 
   world_size: 1 # Maximum number of GPUs to use
   backend: nccl # Backend to use for distributed training
 
 exp: 
-  num_epochs: 5  # Increased from 2 to 5 epochs
-  checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_test"
+  num_epochs: 8 # Increased from 5 to 8 epochs for better convergence
+  checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_experiment"
   checkpoint_name: null # "epoch_7.pth"
   checkpoint_freq: 1 # Save checkpoints every N epochs
+  experiment_name: "baseline" # Experiment identifier (change for each experiment)
+  visualization_dir: "/home/yang.xiyu/Github/RETProgression/src/visualizations" # Directory for plots
 
 data: 
   data_dir: "/work/retprogression"
   annotations_file_name: "referable_img_grades_"
   class_labels: "referable_binary_DR"
-  batch_size: 64 # Reduced batch size per GPU for more efficient multi-GPU training
+  batch_size: 64
   shuffle: True
-  num_workers: 7 # Increased from 4 to 7 per GPU for better data loading performance
+  num_workers: 7
+  augmentation:
+    enabled: True
+    strength: "moderate" # Options: "none", "moderate", "strong" 
+    visualize: True # Whether to save augmentation visualizations
 
 caching: 
   enabled: True
-  train_cache_size: 1000 # Cache 1000 images
-  val_cache_size: 1000 # Cache 1000 images
-  prefetch_factor: 4 # Increased from 2 to 4 for improved prefetching
+  train_cache_size: 1000
+  val_cache_size: 1000
+  prefetch_factor: 8 # Increased prefetch factor
 
 model: 
-  name: vit_base_patch16_224 # ResNet50: resnet50.a1_in1k
+  name: vit_base_patch16_224
   num_classes: 2
   pretrained: True
 
 criterion: 
-  name: cross_entropy
-  class_weights: True  # Enable class weighting for imbalanced dataset (93:7)
+  type: "cross_entropy" # Options: "cross_entropy", "focal_loss"
+  use_class_weights: True # Whether to use class weighting (for CrossEntropy)
+  class_weights: [1.0, 13.0] # Class weights for [negative, positive]
+  # Focal Loss parameters
+  alpha: 0.25 # Alpha parameter for focal loss (higher values focus more on rare class)
+  gamma: 2.0 # Gamma parameter for focal loss (higher values focus more on hard examples)
 
 optimizer: 
   name: adam
-  lr: 0.00005  # Lowered learning rate from 0.0001 to 0.00005
-  weight_decay: 0.001  # Increased weight decay from 0.0005 to 0.001
+  lr: 0.00005 # Learning rate
+  weight_decay: 0.001
   momentum: 0.9
 
 lr_scheduler: 
+  type: "step" # Options: "step", "cosine"
   step_size: 7
   gamma: 0.1
+  warmup:
+    enabled: False # Whether to use learning rate warmup
+    warmup_proportion: 0.1 # Proportion of first epoch for warmup
+    min_lr: 1.0e-7 # Starting learning rate for warmup
 
 optimization: 
   amp_enabled: True # Enable automatic mixed precision
@@ -50,13 +65,69 @@ optimization:
   drop_last: True # Drop incomplete batches to avoid small batch issues
 
 # Early stopping configuration
-early_stopping:
+early_stopping: 
   enabled: True
-  patience: 5  # Number of epochs with no improvement after which training will be stopped
-  metric: balanced_accuracy  # Metric to monitor for early stopping
-  mode: max  # Whether to maximize or minimize the monitored metric
-  min_delta: 0.001  # Minimum change to qualify as an improvement
+  patience: 5 # Number of epochs with no improvement after which training will be stopped
+  metric: balanced_accuracy # Metric to monitor for early stopping
+  mode: max # Whether to maximize or minimize the monitored metric
+  min_delta: 0.001 # Minimum change to qualify as an improvement
 
 # Profiling disabled to avoid PyTorch internal error
 profiling: 
   enabled: False
+
+# Experiment-specific configurations
+# ===================================
+
+# Experiment 1: Moderate Augmentation + Focal Loss
+experiment_focal_loss:
+  exp:
+    experiment_name: "focal_loss"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_focal_loss"
+  data:
+    augmentation:
+      strength: "moderate"
+  criterion:
+    type: "focal_loss"
+    use_class_weights: False # Not needed for Focal Loss
+    alpha: 0.25
+    gamma: 2.0
+  lr_scheduler:
+    warmup:
+      enabled: False
+
+# Experiment 2: Moderate Augmentation + Learning Rate Warmup
+experiment_warmup:
+  exp:
+    experiment_name: "warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_warmup"
+  data:
+    augmentation:
+      strength: "moderate"
+  criterion:
+    type: "cross_entropy"
+    use_class_weights: True
+  lr_scheduler:
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1
+      min_lr: 1.0e-7
+
+# Experiment 3: Moderate Augmentation + Focal Loss + Learning Rate Warmup
+experiment_focal_warmup:
+  exp:
+    experiment_name: "focal_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_focal_warmup"
+  data:
+    augmentation:
+      strength: "moderate"
+  criterion:
+    type: "focal_loss"
+    use_class_weights: False
+    alpha: 0.25
+    gamma: 2.0
+  lr_scheduler:
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1
+      min_lr: 1.0e-7

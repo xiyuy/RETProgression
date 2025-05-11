@@ -402,9 +402,7 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
     first_batch_printed = False
     
     # Initialize mixed precision scaler if enabled
-    scaler = None
-    if amp_enabled: 
-        scaler = GradScaler() 
+    scaler = torch.amp.GradScaler('cuda') if amp_enabled else None 
     
     # Initialize memory monitor for debugging (only on rank 0)
     memory_monitor = None
