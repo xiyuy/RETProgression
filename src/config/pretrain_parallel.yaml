@@ -18,6 +18,7 @@ data:
   batch_size: 64
   shuffle: True
   num_workers: 7
+  resolution: 384  # New parameter for image resolution (default was 224)
   augmentation:
     enabled: True
     strength: "moderate" # Options: "none", "moderate", "strong" 
@@ -27,7 +28,7 @@ caching:
   enabled: True
   train_cache_size: 1000
   val_cache_size: 1000
-  prefetch_factor: 8 # Increased prefetch factor
+  prefetch_factor: 2 # Increased prefetch factor
 
 model: 
   name: vit_base_patch16_224
@@ -97,10 +98,11 @@ experiment_focal_loss:
       enabled: False
 
 # Experiment 2: Moderate Augmentation + Learning Rate Warmup
-experiment_warmup:
+experiment_warmup: 
   exp:
+    num_epochs: 15  # Default: 8
     experiment_name: "warmup"
-    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iter4_balanced_warmup_cosine"
   data:
     augmentation:
       strength: "moderate"
@@ -108,6 +110,7 @@ experiment_warmup:
     type: "cross_entropy"
     use_class_weights: True
   lr_scheduler:
+    type: "cosine"  # Default: "step"
     warmup:
       enabled: True
       warmup_proportion: 0.1
@@ -116,6 +119,7 @@ experiment_warmup:
 # Experiment 3: Moderate Augmentation + Focal Loss + Learning Rate Warmup
 experiment_focal_warmup:
   exp:
+    num_epochs: 15  # Default: 8
     experiment_name: "focal_warmup"
     checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_focal_warmup"
   data:
@@ -124,10 +128,38 @@ experiment_focal_warmup:
   criterion:
     type: "focal_loss"
     use_class_weights: False
-    alpha: 0.25
+    alpha: 1.0
     gamma: 2.0
   lr_scheduler:
     warmup:
       enabled: True
       warmup_proportion: 0.1
       min_lr: 1.0e-7
+
+# Experiment 4: Higher Resolution with Warmup
+experiment_high_resolution:
+  exp:
+    experiment_name: "high_resolution_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration5_high_resolution_warmup"
+    num_epochs: 15  # Increased from default 8 to 15 like in warmup experiment
+  data:
+    resolution: 384  # Higher resolution for this experiment
+    augmentation:
+      strength: "moderate"
+  model:
+    name: vit_base_patch16_224  # Base model name stays the same
+    img_size: 384  # Model-specific resolution parameter
+  criterion:
+    type: "cross_entropy"
+    use_class_weights: True
+    class_weights: [1.0, 13.0]  # Weight for positive class
+  optimizer:
+    lr: 0.00004  # Slightly lower LR for higher resolution
+  lr_scheduler:
+    type: "cosine"  # Cosine annealing scheduler
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1  # Warm up for 10% of first epoch
+      min_lr: 1.0e-7  # Starting learning rate for warmup
+  optimization:
+    gradient_accumulation_steps: 4  # Increase steps for larger images

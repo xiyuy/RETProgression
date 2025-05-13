@@ -71,46 +71,48 @@ class JoslinData(Dataset):
             default_img = torch.zeros((3, 224, 224))
             return default_img, torch.tensor(0, dtype=torch.long)
 
-def get_transforms(augmentation_strength='moderate'):
+def get_transforms(augmentation_strength='moderate', resolution=224):
     """
-    Returns train and validation transforms based on the specified augmentation strength.
+    Returns train and validation transforms based on the specified 
+    augmentation strength and resolution.
     
     Args:
         augmentation_strength: 'none', 'moderate', or 'strong'
+        resolution: Image resolution (height and width in pixels)
     
     Returns:
         Dictionary with 'train' and 'val' transforms
     """
-    # Base validation transform - always the same
+    # Base validation transform with configurable resolution
     val_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((resolution, resolution)),
         transforms.ToTensor(),
     ])
     
     # No augmentation - just resize and convert to tensor
     if augmentation_strength == 'none':
         train_transform = transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((resolution, resolution)),
             transforms.ToTensor(),
         ])
     
     # Moderate augmentation - balanced settings
     elif augmentation_strength == 'moderate':
         train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.85, 1.0)),  # Less aggressive crop
+            transforms.RandomResizedCrop(resolution, scale=(0.85, 1.0)),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),  # Fundus images are rotation invariant
-            transforms.RandomRotation(15),    # Reduced rotation
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),  # Reduced color distortion
-            transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),  # Gentler affine
+            transforms.RandomVerticalFlip(),
+            transforms.RandomRotation(15),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),
+            transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),
             transforms.ToTensor(),
-            transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)),  # Reduced erasing
+            transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)),
         ])
     
-    # Strong augmentation - original enhanced settings
+    # Strong augmentation with configurable resolution
     elif augmentation_strength == 'strong':
         train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.75, 1.0)),
+            transforms.RandomResizedCrop(resolution, scale=(0.75, 1.0)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(30),

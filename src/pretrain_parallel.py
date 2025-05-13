@@ -164,15 +164,18 @@ def train_on_device(rank, world_size, config):
     # Get data augmentation settings
     augmentation_enabled = getattr(config.data, 'augmentation', {}).get('enabled', True)
     augmentation_strength = getattr(config.data, 'augmentation', {}).get('strength', 'moderate')
+    # Get resolution from config or use default
+    resolution = getattr(config.data, 'resolution', 224)
     
     if not augmentation_enabled:
         augmentation_strength = 'none'
     
     if rank == 0:
         logger.info(f"Data augmentation: {augmentation_strength}")
+        logger.info(f"Image resolution: {resolution}x{resolution}")
     
-    # Get transforms based on augmentation settings
-    transforms_dict = get_transforms(augmentation_strength)
+    # Get transforms based on augmentation settings and resolution
+    transforms_dict = get_transforms(augmentation_strength, resolution=resolution)
     train_transform = transforms_dict['train']
     val_transform = transforms_dict['val']
     
@@ -293,6 +296,21 @@ def train_on_device(rank, world_size, config):
         # Get drop_last from config or default to True for better batch consistency
         drop_last = getattr(config.optimization, 'drop_last', True) if hasattr(config, 'optimization') else True
         
+        # Adjust batch size based on resolution if needed
+        resolution = getattr(config.data, 'resolution', 224)
+        original_batch_size = config.data.batch_size
+        
+        # Optional automatic batch size adjustment
+        if resolution > 224 and not hasattr(config.data, 'adjusted_batch_size'):
+            # Reduce batch size proportionally to square of resolution increase
+            scale_factor = (resolution / 224) ** 2
+            adjusted_batch_size = max(1, int(original_batch_size / scale_factor))
+            if adjusted_batch_size < original_batch_size and rank == 0:
+                logger.warning(f"Automatically reducing batch size from {original_batch_size} to {adjusted_batch_size} "
+                            f"due to higher resolution ({resolution}x{resolution})")
+                logger.warning("Set data.adjusted_batch_size=False in config to disable this behavior")
+            config.data.batch_size = adjusted_batch_size
+
         dataloader_kwargs = { 
             'batch_size': config.data.batch_size, 
             'shuffle': False, # We're using DistributedSampler instead
@@ -343,12 +361,27 @@ def train_on_device(rank, world_size, config):
     model_start_time = time.time() 
     
     try: 
-        # Create model with efficient initialization
-        model = create_model( 
-            config.model.name, 
-            pretrained=config.model.pretrained, 
-            num_classes=config.model.num_classes 
-        ) 
+        # Get model-specific resolution or use data resolution
+        img_size = getattr(config.model, 'img_size', 
+                          getattr(config.data, 'resolution', 224))
+
+        # Create model with configurable image size
+        if 'vit' in config.model.name.lower():
+            model = create_model(
+                config.model.name,
+                pretrained=config.model.pretrained,
+                num_classes=config.model.num_classes,
+                img_size=img_size  # Pass image size to ViT model
+            )
+            if rank == 0:
+                logger.info(f"Created ViT model with image size: {img_size}x{img_size}")
+        else:
+            # For non-ViT models
+            model = create_model(
+                config.model.name,
+                pretrained=config.model.pretrained,
+                num_classes=config.model.num_classes
+            ) 
         
         # Log model parameters count (only on rank 0)
         if rank == 0: 
@@ -954,6 +987,10 @@ def run(config):
         # Merge configurations
         config = merge_experiment_config(config, experiment_name)
         print(f"Running experiment: {experiment_name}")
+
+        # Log resolution information
+        resolution = getattr(config.data, 'resolution', 224)
+        print(f"Using image resolution: {resolution}x{resolution}")
     
     # Handle checkpoint directory
     if hasattr(config.exp, 'checkpoint_dir'): 
