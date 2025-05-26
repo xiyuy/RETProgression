@@ -1,6 +1,6 @@
 # Base configuration for all experiments
 distributed: 
-  world_size: 1 # Maximum number of GPUs to use
+  world_size: 2 # Maximum number of GPUs to use
   backend: nccl # Backend to use for distributed training
 
 exp: 
@@ -12,7 +12,7 @@ exp:
   visualization_dir: "/home/yang.xiyu/Github/RETProgression/src/visualizations" # Directory for plots
 
 data: 
-  data_dir: "/work/retprogression"
+  data_dir: "/projects/retprogression"
   annotations_file_name: "referable_img_grades_"
   class_labels: "referable_binary_DR"
   batch_size: 64
@@ -140,8 +140,8 @@ experiment_focal_warmup:
 experiment_high_resolution:
   exp:
     experiment_name: "high_resolution_warmup"
-    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration5_high_resolution_warmup"
-    num_epochs: 15  # Increased from default 8 to 15 like in warmup experiment
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU2_Iteration5_high_resolution_warmup"
+    num_epochs: 1  # default is 15.
   data:
     resolution: 384  # Higher resolution for this experiment
     augmentation:

@@ -1,18 +1,20 @@
-import os 
-import pandas as pd 
-from PIL import Image 
-import torch 
-from torchvision import transforms 
-from torch.utils.data import Dataset 
-import logging 
-import matplotlib.pyplot as plt
+import os
+import pandas as pd
 import numpy as np
+import torch
+from torch.utils.data import Dataset
+from PIL import Image
+import logging
+import matplotlib.pyplot as plt
+from torchvision import transforms
 from torchvision.utils import make_grid
 
-class JoslinData(Dataset): 
-    def __init__(self, data_dir, annotations_file, img_dir, transform=transforms.ToTensor()): 
+class JoslinData(Dataset):
+    """Dataset for medical image classification with optimized data loading"""
+    
+    def __init__(self, data_dir, annotations_file, img_dir, transform=transforms.ToTensor()):
         """
-        Initialize JoslinData dataset with optimized data loading.
+        Initialize JoslinData dataset
         
         Args:
             data_dir: Base directory containing the data
@@ -20,83 +22,76 @@ class JoslinData(Dataset):
             img_dir: Directory containing the images
             transform: Transformations to apply to the images
         """
-        self.img_dir = os.path.join(data_dir, img_dir) 
+        self.img_dir = os.path.join(data_dir, img_dir)
         self.img_labels = pd.read_csv(os.path.join(data_dir, annotations_file), index_col=0)
-        self.transform = transform 
-        self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1} # Create a map
+        self.img_labels = self.img_labels.iloc[:1000, :]  # Limit to first 1000 samples
+        self.transform = transform
+        self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
         
-        # Pre-compute all image paths for faster access
-        self.img_paths = [os.path.join(self.img_dir, str(self.img_labels.iloc[idx, 0]) + '.jpeg') 
-                        for idx in range(len(self.img_labels))] 
+        # Pre-compute image paths for faster access
+        self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpeg") 
+                          for idx in range(len(self.img_labels))]
         
-        # Calculate class distribution for logging
-        class_counts = self.img_labels.iloc[:, 1].value_counts() 
-        total_samples = len(self.img_labels) 
+        # Log dataset statistics
+        self._log_dataset_info()
+    
+    def _log_dataset_info(self):
+        """Log dataset information and class distribution"""
+        class_counts = self.img_labels.iloc[:, 1].value_counts()
+        total_samples = len(self.img_labels)
         class_distribution = {label: f"{count} ({count/total_samples*100:.1f}%)" 
-                            for label, count in class_counts.items()} 
+                             for label, count in class_counts.items()}
         
-        # Log dataset initialization
-        logging.info(f"JoslinData: Loaded {len(self.img_labels)} samples from {annotations_file}") 
-        logging.info(f"Class distribution: {class_distribution}") 
-        
-    def __len__(self): 
-        return len(self.img_labels) 
+        logging.info(f"JoslinData: Loaded {total_samples} samples from {self.img_dir}")
+        logging.info(f"Class distribution: {class_distribution}")
+    
+    def __len__(self):
+        return len(self.img_labels)
     
     def __getitem__(self, idx):
+        """Get image and label for a given index with robust error handling"""
         img_path = self.img_paths[idx]
         
         try:
-            # Open the image file 
+            # Open and transform image
             image = Image.open(img_path)
+            image_transformed = self.transform(image) if self.transform else image
             
-            # Apply transformation with explicit error handling
-            try:
-                if self.transform:
-                    image_transformed = self.transform(image)
-                else:
-                    image_transformed = image
-            except Exception as transform_error:
-                print(f"Transform error: {transform_error}")
-                raise
-            
-            # Get the label
+            # Get label
             label = self.img_labels.iloc[idx, 1]
             label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
             
             return image_transformed, label_tensor
             
         except Exception as e:
-            print(f"Error in __getitem__ for {img_path}: {str(e)}")
-            # Create a proper fallback tensor with the expected shape
-            default_img = torch.zeros((3, 224, 224))
-            return default_img, torch.tensor(0, dtype=torch.long)
+            logging.warning(f"Error in __getitem__ for {img_path}: {str(e)}")
+            # Return fallback tensor with expected shape
+            return torch.zeros((3, 224, 224)), torch.tensor(0, dtype=torch.long)
+
 
 def get_transforms(augmentation_strength='moderate', resolution=224):
     """
-    Returns train and validation transforms based on the specified 
-    augmentation strength and resolution.
+    Get train and validation transforms based on specified augmentation strength
     
     Args:
         augmentation_strength: 'none', 'moderate', or 'strong'
         resolution: Image resolution (height and width in pixels)
-    
+        
     Returns:
         Dictionary with 'train' and 'val' transforms
     """
-    # Base validation transform with configurable resolution
+    # Base validation transform
     val_transform = transforms.Compose([
         transforms.Resize((resolution, resolution)),
         transforms.ToTensor(),
     ])
     
-    # No augmentation - just resize and convert to tensor
+    # Select train transform based on augmentation strength
     if augmentation_strength == 'none':
         train_transform = transforms.Compose([
             transforms.Resize((resolution, resolution)),
             transforms.ToTensor(),
         ])
-    
-    # Moderate augmentation - balanced settings
     elif augmentation_strength == 'moderate':
         train_transform = transforms.Compose([
             transforms.RandomResizedCrop(resolution, scale=(0.85, 1.0)),
@@ -108,8 +103,6 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
             transforms.ToTensor(),
             transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)),
         ])
-    
-    # Strong augmentation with configurable resolution
     elif augmentation_strength == 'strong':
         train_transform = transforms.Compose([
             transforms.RandomResizedCrop(resolution, scale=(0.75, 1.0)),
@@ -129,9 +122,10 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
         'val': val_transform
     }
 
+
 def visualize_augmentations(dataset, num_samples=4, num_augmentations=5, save_path=None):
     """
-    Visualize augmentations applied to random samples from the dataset.
+    Visualize augmentations applied to random samples from the dataset
     
     Args:
         dataset: Dataset to sample from
@@ -139,30 +133,25 @@ def visualize_augmentations(dataset, num_samples=4, num_augmentations=5, save_pa
         num_augmentations: Number of augmentations to apply to each sample
         save_path: Path to save the visualization
     """
-    # Get a few random samples
     indices = np.random.choice(len(dataset), num_samples, replace=False)
-    
-    # Create a figure to show original images and augmentations
     fig, axs = plt.subplots(num_samples, num_augmentations + 1, figsize=(12, 3 * num_samples))
     
-    # If only one sample, ensure axs is 2D
+    # Handle single sample case
     if num_samples == 1:
         axs = axs.reshape(1, -1)
     
     for i, idx in enumerate(indices):
-        # Get original image
+        # Display original image
         img, label = dataset[idx]
         img_np = img.permute(1, 2, 0).numpy()
-        img_np = np.clip(img_np, 0, 1)  # Ensure values are in [0, 1]
+        img_np = np.clip(img_np, 0, 1)
         
-        # Display original
         axs[i, 0].imshow(img_np)
         axs[i, 0].set_title(f"Original (Class {label.item()})")
         axs[i, 0].axis('off')
         
         # Display augmentations
         for j in range(1, num_augmentations + 1):
-            # Apply transform again to get new augmentation
             img_aug, _ = dataset[idx]
             img_aug_np = img_aug.permute(1, 2, 0).numpy()
             img_aug_np = np.clip(img_aug_np, 0, 1)
@@ -175,7 +164,7 @@ def visualize_augmentations(dataset, num_samples=4, num_augmentations=5, save_pa
     
     if save_path:
         plt.savefig(save_path)
-        print(f"Saved augmentation visualization to {save_path}")
+        logging.info(f"Saved augmentation visualization to {save_path}")
         plt.close()
     else:
         plt.show()
