@@ -45,7 +45,7 @@ def safe_clear_directory(directory_path, logger=None):
 def setup(rank, world_size):
     """Initialize the distributed environment."""
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '29501'
+    os.environ['MASTER_PORT'] = '12340'
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
     if rank == 0:
         logging.info(f"Initialized process group with world_size={world_size}")
@@ -146,13 +146,13 @@ def train_on_device(rank, world_size, config):
             "train": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "train.csv",
-                img_dir="Exports_02052025",
+                img_dir="images", # default: Exports_02052025
                 transform=train_transform
             ),
             "val": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "val.csv",
-                img_dir="Exports_02052025",
+                img_dir="images", # default: Exports_02052025
                 transform=val_transform
             )
         }
@@ -245,15 +245,15 @@ def train_on_device(rank, world_size, config):
         resolution = getattr(config.data, 'resolution', 224)
         original_batch_size = config.data.batch_size
         
-        # Optional automatic batch size adjustment
-        if resolution > 224 and not hasattr(config.data, 'adjusted_batch_size'):
-            scale_factor = (resolution / 224) ** 2
-            adjusted_batch_size = max(1, int(original_batch_size / scale_factor))
-            if adjusted_batch_size < original_batch_size and rank == 0:
-                logger.warning(f"Automatically reducing batch size from {original_batch_size} to {adjusted_batch_size} "
-                               f"due to higher resolution ({resolution}x{resolution})")
-                logger.warning("Set data.adjusted_batch_size=False in config to disable this behavior")
-            config.data.batch_size = adjusted_batch_size
+        # Optional automatic batch size adjustment (commented out)
+        # if resolution > 224 and not hasattr(config.data, 'adjusted_batch_size'):
+        #     scale_factor = (resolution / 224) ** 2
+        #     adjusted_batch_size = max(1, int(original_batch_size / scale_factor))
+        #     if adjusted_batch_size < original_batch_size and rank == 0:
+        #         logger.warning(f"Automatically reducing batch size from {original_batch_size} to {adjusted_batch_size} "
+        #                        f"due to higher resolution ({resolution}x{resolution})")
+        #         logger.warning("Set data.adjusted_batch_size=False in config to disable this behavior")
+        #     config.data.batch_size = adjusted_batch_size
         
         dataloader_kwargs = {
             'batch_size': config.data.batch_size,

@@ -1,10 +1,10 @@
 # Base configuration for all experiments
 distributed: 
-  world_size: 2 # Maximum number of GPUs to use
+  world_size: 1 # Maximum number of GPUs to use
   backend: nccl # Backend to use for distributed training
 
 exp: 
-  num_epochs: 8 # Increased from 5 to 8 epochs for better convergence
+  num_epochs: 1 # Increased from 5 to 8 epochs for better convergence
   checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_experiment"
   checkpoint_name: null # "epoch_7.pth"
   checkpoint_freq: 1 # Save checkpoints every N epochs
@@ -12,13 +12,13 @@ exp:
   visualization_dir: "/home/yang.xiyu/Github/RETProgression/src/visualizations" # Directory for plots
 
 data: 
-  data_dir: "/projects/retprogression"
-  annotations_file_name: "referable_img_grades_"
-  class_labels: "referable_binary_DR"
-  batch_size: 64
+  data_dir: "/projects/retprogression/xiyu_yang/"
+  annotations_file_name: "MTM_img_grades_part1_"
+  class_labels: "MTM_binary_DR"
+  batch_size: 32
   shuffle: True
   num_workers: 7
-  resolution: 384  # New parameter for image resolution (default was 224)
+  resolution: 224  # New parameter for image resolution (default was 224)
   augmentation:
     enabled: True
     strength: "moderate" # Options: "none", "moderate", "strong" 
@@ -163,3 +163,156 @@ experiment_high_resolution:
       min_lr: 1.0e-7  # Starting learning rate for warmup
   optimization:
     gradient_accumulation_steps: 4  # Increase steps for larger images
+
+# Experiment 5: Higher Resolution (from 448 to 1000)
+experiment_res_448:
+  distributed: 
+    world_size: 1 # Maximum number of GPUs to use
+  exp:
+    experiment_name: "resolution_448_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_448_warmup"
+    num_epochs: 10
+  data:
+    resolution: 448
+    batch_size: 32  # Reduced from 64 (baseline) or from 48 (if using 384)
+  model:
+    name: vit_base_patch16_224
+    img_size: 448  # Match with data resolution
+  optimizer:
+    lr: 0.00004  # Slightly reduced from 0.00005
+  lr_scheduler:
+    type: "cosine"  # Use cosine annealing 
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1  # Warm up for 10% of first epoch
+      min_lr: 1.0e-7
+  optimization:
+    gradient_accumulation_steps: 2
+    amp_enabled: True
+
+
+experiment_res_512:
+  exp:
+    experiment_name: "resolution_512_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_512_warmup"
+    num_epochs: 10
+  data:
+    resolution: 512
+    batch_size: 24  # Further reduced
+  model:
+    name: vit_base_patch16_224
+    img_size: 512
+  optimizer:
+    lr: 0.00003
+  lr_scheduler:
+    type: "cosine"
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1
+      min_lr: 1.0e-7
+  optimization:
+    gradient_accumulation_steps: 3
+    amp_enabled: True
+
+
+experiment_res_640:
+  exp:
+    experiment_name: "resolution_640_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_640_warmup"
+    num_epochs: 10
+  data:
+    resolution: 640
+    batch_size: 16  # Significantly reduced
+  model:
+    name: vit_base_patch16_224
+    img_size: 640
+  optimizer:
+    lr: 0.00002  # Reduced further
+  lr_scheduler:
+    type: "cosine"
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1
+      min_lr: 1.0e-7
+  optimization:
+    gradient_accumulation_steps: 4
+    amp_enabled: True
+
+
+experiment_res_768:
+  exp:
+    experiment_name: "resolution_768_warmup"
+    checkpoint_dir: "/home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_768_warmup"
+    num_epochs: 10
+  data:
+    resolution: 768
+    batch_size: 8  # Dramatically reduced
+  model:
+    name: vit_base_patch16_224
+    img_size: 768
+  optimizer:
+    lr: 0.00001  # Substantially reduced
+  lr_scheduler:
+    type: "cosine"
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1
+      min_lr: 1.0e-7
+  optimization:
+    gradient_accumulation_steps: 8
+    amp_enabled: True
+    gradient_clipping: 1.0  # Maintain gradient clipping
+
+
+experiment_res_896:
+  exp:
+    experiment_name: "resolution_896_warmup"
+    checkpoint_dir: "/projects/retprogression/xiyu_yang/checkpoints/referable_res_896_warmup"
+    num_epochs: 10
+  data:
+    resolution: 896
+    batch_size: 6  # Very small batch size
+    augmentation:
+      strength: "strong"
+  model:
+    name: vit_base_patch16_224
+    img_size: 896
+  optimizer:
+    lr: 0.000008  # Very low learning rate
+  lr_scheduler:
+    type: "cosine"
+    warmup:
+      enabled: True
+      warmup_proportion: 0.1
+      min_lr: 1.0e-7
+  optimization:
+    gradient_accumulation_steps: 12
+    amp_enabled: True
+    gradient_clipping: 1.0
+
+
+experiment_res_1000:
+  exp:
+    experiment_name: "resolution_1000_warmup"
+    checkpoint_dir: "/projects/retprogression/xiyu_yang/checkpoints/referable_res_1000_warmup"
+    num_epochs: 10
+  data:
+    resolution: 1000
+    batch_size: 4  # Minimum viable batch size
+    augmentation:
+      strength: "strong"
+  model:
+    name: vit_base_patch16_224
+    img_size: 1000
+  optimizer:
+    lr: 0.000005  # Extremely low learning rate
+  lr_scheduler:
+    type: "cosine"
+    warmup:
+      enabled: True
+      warmup_proportion: 0.15  # Slightly longer warmup for highest resolution
+      min_lr: 1.0e-7
+  optimization:
+    gradient_accumulation_steps: 16  # High accumulation to compensate for small batches
+    amp_enabled: True
+    gradient_clipping: 0.5  # Reduced clipping threshold
