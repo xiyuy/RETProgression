@@ -9,11 +9,10 @@ exp:
   checkpoint_name: null # "epoch_7.pth"
   checkpoint_freq: 1 # Save checkpoints every N epochs
   experiment_name: "baseline" # Experiment identifier (change for each experiment)
-  visualization_dir: "/home/yang.xiyu/Github/RETProgression/src/visualizations" # Directory for plots
 
 data: 
   data_dir: "/projects/retprogression/xiyu_yang/"
-  annotations_file_name: "MTM_img_grades_part1_"
+  annotations_file_name: "MTM_img_grades_part3_"
   class_labels: "MTM_binary_DR"
   batch_size: 32
   shuffle: True
@@ -22,7 +21,6 @@ data:
   augmentation:
     enabled: True
     strength: "moderate" # Options: "none", "moderate", "strong" 
-    visualize: True # Whether to save augmentation visualizations
 
 caching: 
   enabled: True

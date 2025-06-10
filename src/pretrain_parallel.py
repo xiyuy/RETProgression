@@ -12,10 +12,9 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 
 # Import custom modules
-from datasets import JoslinData, get_transforms, visualize_augmentations
+from datasets import JoslinData, get_transforms
 from loss_functions import get_loss_function
 from lr_schedulers import create_scheduler
-from visualization_tools import TrainingMonitor
 from utils_parallel import (
     train_model_custom_progress, CachedDataset, 
     compute_metrics_from_confusion_matrix, EarlyStopping
@@ -45,7 +44,7 @@ def safe_clear_directory(directory_path, logger=None):
 def setup(rank, world_size):
     """Initialize the distributed environment."""
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12340'
+    os.environ['MASTER_PORT'] = '12346'
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
     if rank == 0:
         logging.info(f"Initialized process group with world_size={world_size}")
@@ -89,16 +88,8 @@ def train_on_device(rank, world_size, config):
     device = torch.device(f"cuda:{rank}")
     torch.cuda.set_device(device)
     
-    # Initialize training monitor for visualizations (only on rank 0)
-    training_monitor = None
+    # Log basic configuration
     if rank == 0:
-        vis_dir = getattr(config.exp, 'visualization_dir', 
-                          os.path.join(config.exp.checkpoint_dir, 'visualizations'))
-        os.makedirs(vis_dir, exist_ok=True)
-        experiment_name = getattr(config.exp, 'experiment_name', 'experiment')
-        training_monitor = TrainingMonitor(vis_dir, experiment_name)
-        
-        # Log basic configuration
         logger.info(f"Running training on rank {rank} with world size {world_size}")
         logger.info(f"Training for {config.exp.num_epochs} epochs")
         logger.info(f"Batch size: {config.data.batch_size} (per GPU)")
@@ -156,16 +147,6 @@ def train_on_device(rank, world_size, config):
                 transform=val_transform
             )
         }
-        
-        # Visualize augmentations if enabled (only on rank 0)
-        if rank == 0 and augmentation_enabled and getattr(config.data.augmentation, 'visualize', False):
-            vis_dir = getattr(config.exp, 'visualization_dir', 
-                            os.path.join(config.exp.checkpoint_dir, 'visualizations'))
-            aug_vis_path = os.path.join(vis_dir, 
-                                       f"{getattr(config.exp, 'experiment_name', 'default')}_augmentations.png")
-            visualize_augmentations(base_datasets["train"], 
-                                   num_samples=3, num_augmentations=5, save_path=aug_vis_path)
-            logger.info(f"Saved augmentation visualization to {aug_vis_path}")
         
         # Cache settings - proportional to dataset size to avoid memory issues
         train_cache_size = min(len(base_datasets["train"]), train_cache_size)
@@ -459,8 +440,6 @@ def train_on_device(rank, world_size, config):
         
         if rank == 0:
             logger.info("Training completed successfully")
-            if training_monitor:
-                training_monitor.generate_all_plots()
                 
     except Exception as e:
         if rank == 0:
@@ -546,10 +525,6 @@ def run(config):
         # Create the directory (or recreate if just cleared)
         os.makedirs(checkpoint_dir, exist_ok=True)
         logging.info(f"Checkpoint directory prepared at {checkpoint_dir}")
-    
-    # Create visualization directory if specified
-    if hasattr(config.exp, 'visualization_dir'):
-        os.makedirs(config.exp.visualization_dir, exist_ok=True)
     
     # Configure main logging
     main_log_file = os.path.join(

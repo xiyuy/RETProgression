@@ -48,7 +48,7 @@ def configure_logging(log_dir):
 
 def load_model(checkpoint_path, model_name="vit_base_patch16_224", num_classes=2, device="cuda"):
     """Load model from checkpoint"""
-    model = create_model(model_name, pretrained=False, num_classes=num_classes, img_size=384)
+    model = create_model(model_name, pretrained=False, num_classes=num_classes, img_size=1000)
     
     # Load weights
     checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -73,7 +73,7 @@ def load_model(checkpoint_path, model_name="vit_base_patch16_224", num_classes=2
     
     return model
 
-def load_test_dataset(data_dir, annotations_file, resolution=224):
+def load_test_dataset(data_dir, annotations_file, resolution=1000):
     """Load test dataset"""
     transforms_dict = get_transforms('none', resolution=resolution)
     
@@ -279,7 +279,7 @@ def main():
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers for data loading')
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu',
                         help='Device to run inference on')
-    parser.add_argument('--resolution', type=int, default=384, help='Image resolution')
+    parser.add_argument('--resolution', type=int, default=1000, help='Image resolution')
     
     args = parser.parse_args()
     

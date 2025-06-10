@@ -27,6 +27,7 @@ class JoslinData(Dataset):
         # self.img_labels = self.img_labels.iloc[:1000, :]  # Limit to first 1000 samples
         self.transform = transform
         self.label_map = {'NMTM': 0, 'MTM': 1}
+        # self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
         
         # Pre-compute image paths for faster access
         self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpg") 
@@ -123,49 +124,3 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
         'val': val_transform
     }
 
-
-def visualize_augmentations(dataset, num_samples=4, num_augmentations=5, save_path=None):
-    """
-    Visualize augmentations applied to random samples from the dataset
-    
-    Args:
-        dataset: Dataset to sample from
-        num_samples: Number of different samples to visualize
-        num_augmentations: Number of augmentations to apply to each sample
-        save_path: Path to save the visualization
-    """
-    indices = np.random.choice(len(dataset), num_samples, replace=False)
-    fig, axs = plt.subplots(num_samples, num_augmentations + 1, figsize=(12, 3 * num_samples))
-    
-    # Handle single sample case
-    if num_samples == 1:
-        axs = axs.reshape(1, -1)
-    
-    for i, idx in enumerate(indices):
-        # Display original image
-        img, label = dataset[idx]
-        img_np = img.permute(1, 2, 0).numpy()
-        img_np = np.clip(img_np, 0, 1)
-        
-        axs[i, 0].imshow(img_np)
-        axs[i, 0].set_title(f"Original (Class {label.item()})")
-        axs[i, 0].axis('off')
-        
-        # Display augmentations
-        for j in range(1, num_augmentations + 1):
-            img_aug, _ = dataset[idx]
-            img_aug_np = img_aug.permute(1, 2, 0).numpy()
-            img_aug_np = np.clip(img_aug_np, 0, 1)
-            
-            axs[i, j].imshow(img_aug_np)
-            axs[i, j].set_title(f"Aug {j}")
-            axs[i, j].axis('off')
-    
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path)
-        logging.info(f"Saved augmentation visualization to {save_path}")
-        plt.close()
-    else:
-        plt.show()
