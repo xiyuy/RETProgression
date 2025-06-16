@@ -26,11 +26,11 @@ class JoslinData(Dataset):
         self.img_labels = pd.read_csv(os.path.join(data_dir, annotations_file), index_col=0)
         # self.img_labels = self.img_labels.iloc[:1000, :]  # Limit to first 1000 samples
         self.transform = transform
-        self.label_map = {'NMTM': 0, 'MTM': 1}
-        # self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
+        # self.label_map = {'NMTM': 0, 'MTM': 1}
+        self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
         
         # Pre-compute image paths for faster access
-        self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpg") 
+        self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpeg") 
                           for idx in range(len(self.img_labels))]
         
         # Log dataset statistics
@@ -60,9 +60,9 @@ class JoslinData(Dataset):
             
             # Get label
             label = self.img_labels.iloc[idx, 1]
-            # label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
-            label_tensor = torch.tensor(label, dtype=torch.long)
-            
+            label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
+            # label_tensor = torch.tensor(label, dtype=torch.long)
+        
             return image_transformed, label_tensor
             
         except Exception as e:
@@ -103,7 +103,7 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),
             transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),
             transforms.ToTensor(),
-            transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)),
+            # transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)), # Make sure augmentation is valid from the clinical perspective
         ])
     elif augmentation_strength == 'strong':
         train_transform = transforms.Compose([
@@ -114,7 +114,7 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
             transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.1),
             transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             transforms.ToTensor(),
-            transforms.RandomErasing(p=0.2, scale=(0.02, 0.2)),
+            # transforms.RandomErasing(p=0.2, scale=(0.02, 0.2)),
         ])
     else:
         raise ValueError(f"Unknown augmentation strength: {augmentation_strength}")

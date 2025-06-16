@@ -1,0 +1,295 @@
+caching:
+  enabled: true
+  prefetch_factor: 2
+  train_cache_size: 1000
+  val_cache_size: 1000
+criterion:
+  alpha: 0.25
+  class_weights:
+    - 1.0
+    - 13.0
+  gamma: 2.0
+  type: cross_entropy
+  use_class_weights: true
+data:
+  annotations_file_name: referable_img_grades_
+  augmentation:
+    enabled: true
+    strength: moderate
+  batch_size: 32
+  class_labels: referable_binary_DR
+  data_dir: /projects/retprogression/
+  num_workers: 7
+  resolution: 224
+  shuffle: true
+distributed:
+  backend: nccl
+  world_size: 1
+early_stopping:
+  enabled: true
+  metric: f1_score
+  min_delta: 0.001
+  mode: max
+  patience: 5
+exp:
+  checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_experiment
+  checkpoint_freq: 1
+  checkpoint_name: null
+  experiment_name: baseline
+  master_port: 12345
+  num_epochs: 1
+experiment_focal_loss:
+  criterion:
+    alpha: 0.25
+    gamma: 2.0
+    type: focal_loss
+    use_class_weights: false
+  data:
+    augmentation:
+      strength: moderate
+  exp:
+    checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_focal_loss
+    experiment_name: focal_loss
+  lr_scheduler:
+    warmup:
+      enabled: false
+experiment_focal_warmup:
+  criterion:
+    alpha: 1.0
+    gamma: 2.0
+    type: focal_loss
+    use_class_weights: false
+  data:
+    augmentation:
+      strength: moderate
+  exp:
+    checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iteration3_focal_warmup
+    experiment_name: focal_warmup
+    num_epochs: 15
+  lr_scheduler:
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+experiment_res_1024:
+  data:
+    augmentation:
+      strength: strong
+    batch_size: 4
+    resolution: 1024
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/swinv2_resolution1024
+    checkpoint_name: epoch_23.pth
+    experiment_name: swinv2_res1024
+    master_port: 23456
+    num_epochs: 25
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.15
+  model:
+    img_size: 1024
+    name: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 16
+    gradient_clipping: 0.5
+  optimizer:
+    lr: 5.0e-06
+experiment_res_384:
+  criterion:
+    class_weights:
+      - 1.0
+      - 13.0
+    type: cross_entropy
+    use_class_weights: true
+  data:
+    augmentation:
+      strength: moderate
+    batch_size: 32
+    resolution: 384
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/swinv2_resolution384
+    checkpoint_name: epoch_22.pth
+    experiment_name: swinv2_res384
+    master_port: 12345
+    num_epochs: 25
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 384
+    name: swinv2_base_window12to24_192to384
+  optimization:
+    gradient_accumulation_steps: 4
+  optimizer:
+    lr: 4.0e-05
+experiment_res_448:
+  data:
+    batch_size: 32
+    resolution: 448
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_448_warmup
+    experiment_name: resolution_448_warmup
+    num_epochs: 10
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 448
+    name: vit_base_patch16_224
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 2
+  optimizer:
+    lr: 4.0e-05
+experiment_res_512:
+  data:
+    batch_size: 32
+    resolution: 512
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/swinv2_resolution512
+    checkpoint_name: epoch_22.pth
+    experiment_name: swinv2_res512
+    master_port: 12346
+    num_epochs: 25
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 512
+    name: swinv2_base_window16_256
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 3
+  optimizer:
+    lr: 3.0e-05
+experiment_res_640:
+  data:
+    batch_size: 16
+    resolution: 640
+  exp:
+    checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_640_warmup
+    experiment_name: resolution_640_warmup
+    num_epochs: 10
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 640
+    name: vit_base_patch16_224
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 4
+  optimizer:
+    lr: 2.0e-05
+experiment_res_768:
+  data:
+    batch_size: 8
+    resolution: 768
+  exp:
+    checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_res_768_warmup
+    experiment_name: resolution_768_warmup
+    num_epochs: 10
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 768
+    name: vit_base_patch16_224
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 8
+    gradient_clipping: 1.0
+  optimizer:
+    lr: 1.0e-05
+experiment_res_896:
+  data:
+    augmentation:
+      strength: strong
+    batch_size: 6
+    resolution: 896
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/referable_res_896_warmup
+    experiment_name: resolution_896_warmup
+    num_epochs: 10
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 896
+    name: vit_base_patch16_224
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 12
+    gradient_clipping: 1.0
+  optimizer:
+    lr: 8.0e-06
+experiment_warmup:
+  criterion:
+    type: cross_entropy
+    use_class_weights: true
+  data:
+    augmentation:
+      strength: moderate
+  exp:
+    checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_Iter4_balanced_warmup_cosine
+    experiment_name: warmup
+    num_epochs: 15
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+lr_scheduler:
+  gamma: 0.1
+  step_size: 7
+  type: step
+  warmup:
+    enabled: false
+    min_lr: 1.0e-07
+    warmup_proportion: 0.1
+model:
+  name: vit_base_patch16_224
+  num_classes: 2
+  pretrained: true
+optimization:
+  amp_enabled: true
+  drop_last: true
+  gradient_accumulation_steps: 2
+  gradient_clipping: 1.0
+  sync_bn: false
+optimizer:
+  lr: 5.0e-05
+  momentum: 0.9
+  name: adam
+  weight_decay: 0.001
+profiling:
+  enabled: false

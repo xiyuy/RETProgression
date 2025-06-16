@@ -15,7 +15,7 @@ matplotlib.use('Agg')  # Use non-interactive backend
 from datasets import JoslinData, get_transforms
 from loss_functions import get_loss_function
 from lr_schedulers import create_scheduler
-from utils_parallel import (
+from utils import (
     train_model_custom_progress, CachedDataset, 
     compute_metrics_from_confusion_matrix, EarlyStopping
 )
@@ -41,10 +41,10 @@ def safe_clear_directory(directory_path, logger=None):
             error_msg = f"Error clearing item {item_path}: {str(e)}"
             (logger.error if logger else logging.error)(error_msg)
 
-def setup(rank, world_size):
+def setup(rank, world_size, config):
     """Initialize the distributed environment."""
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12346'
+    os.environ['MASTER_PORT'] = str(config.exp.master_port)
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
     if rank == 0:
         logging.info(f"Initialized process group with world_size={world_size}")
@@ -79,7 +79,7 @@ def configure_rank_logger(rank, log_dir):
 def train_on_device(rank, world_size, config):
     """Training function to run on each GPU."""
     # Setup distributed environment
-    setup(rank, world_size)
+    setup(rank, world_size, config)
     
     # Set up process-specific logging
     logger = configure_rank_logger(rank, config.exp.checkpoint_dir)
@@ -137,13 +137,13 @@ def train_on_device(rank, world_size, config):
             "train": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "train.csv",
-                img_dir="images", # default: Exports_02052025
+                img_dir="Exports_02052025", # default: Exports_02052025
                 transform=train_transform
             ),
             "val": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "val.csv",
-                img_dir="images", # default: Exports_02052025
+                img_dir="Exports_02052025", # default: Exports_02052025
                 transform=val_transform
             )
         }
@@ -290,7 +290,7 @@ def train_on_device(rank, world_size, config):
         img_size = getattr(config.model, 'img_size', getattr(config.data, 'resolution', 224))
         
         # Create model with configurable image size
-        if 'vit' in config.model.name.lower():
+        if 'vit' or 'swinv2' in config.model.name.lower():
             model = create_model(
                 config.model.name,
                 pretrained=config.model.pretrained,
@@ -494,7 +494,7 @@ def merge_experiment_config(base_config, experiment_name=None):
     
     return merged_config
 
-@hydra.main(config_path='config', config_name='pretrain_parallel', version_base="1.3")
+@hydra.main(config_path='config', config_name='train', version_base="1.3")
 def run(config):
     """Main entry point with improved distributed training setup"""
     # Get experiment name if specified
@@ -517,7 +517,7 @@ def run(config):
         os.makedirs(os.path.dirname(checkpoint_dir), exist_ok=True)
         
         # Check if directory exists and clear it
-        if os.path.exists(checkpoint_dir):
+        if os.path.exists(checkpoint_dir) and config.exp.checkpoint_name is None:
             logging.info(f"Checkpoint directory exists at {checkpoint_dir}, clearing contents...")
             safe_clear_directory(checkpoint_dir)
             logging.info(f"Checkpoint directory cleared successfully.")
@@ -529,7 +529,7 @@ def run(config):
     # Configure main logging
     main_log_file = os.path.join(
         config.exp.checkpoint_dir if hasattr(config.exp, 'checkpoint_dir') else '.',
-        'pretrain_parallel.log'
+        'train.log'
     )
     
     logging.basicConfig(
