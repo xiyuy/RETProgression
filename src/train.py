@@ -3,7 +3,7 @@ import os, logging, time, torch, sys, numpy as np
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler, Subset
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 from timm import create_model
@@ -173,6 +173,11 @@ def train_on_device(rank, world_size, config):
         else:
             joslin_data = base_datasets
         
+        weighted_sampler_cfg = getattr(config.data, 'weighted_sampler', {})
+        use_weighted = weighted_sampler_cfg.get('enabled', False)
+        target_ratio = weighted_sampler_cfg.get('target_minority_ratio', 0.14)
+        generator_seed = weighted_sampler_cfg.get('generator_seed', 42)
+
         dataset_time = time.time() - dataset_start_time
         if rank == 0:
             logger.info(f"Datasets created in {dataset_time:.2f}s")
@@ -190,15 +195,57 @@ def train_on_device(rank, world_size, config):
         cleanup()
         return
     
-    # Create samplers for distributed training
-    samplers = {
-        "train": DistributedSampler(
+    # Compute sample weights and indices if use WeightedRandomSampelr
+    if use_weighted:
+        if rank == 0:
+            logger.info(f"Using WeightedRandomSampler with target minority ratio: {target_ratio}")
+
+        label_map = joslin_data["train"].dataset.label_map
+        labels = [label_map[l] for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+
+        n_major = sum(1 for l in labels if l == 0)
+        n_minor = len(labels) - n_major
+
+        weight_major = (1.0 / n_major) * (1.0 - target_ratio)
+        weight_minor = (1.0 / n_minor) * target_ratio
+        weights = [weight_major if l == 0 else weight_minor for l in labels]
+
+        # Deterministic sampling
+        generator = torch.Generator()
+        generator.manual_seed(generator_seed)
+
+        weighted_sampler = WeightedRandomSampler(weights, num_samples=len(labels), replacement=True, generator=generator)
+        sampled_indices = list(weighted_sampler)
+
+        if rank == 0:
+            from collections import Counter
+            sampled_labels = [labels[i] for i in sampled_indices]
+            counter = Counter(sampled_labels)
+            actual_ratio = counter[1] / (counter[0] + counter[1])
+            logger.info(f"Sanity check: Sampled class counts = {dict(counter)}")
+            logger.info(f"Sanity check: Sampled minority ratio ≈ {actual_ratio:.3f} (target = {target_ratio})")
+
+        joslin_data["train"] = Subset(joslin_data["train"], sampled_indices)
+
+        train_sampler = DistributedSampler(
+            joslin_data["train"],
+            num_replicas=world_size,
+            rank=rank,
+            shuffle=True,
+            seed=42
+        )
+    else:
+        train_sampler = DistributedSampler(
             joslin_data["train"],
             num_replicas=world_size,
             rank=rank,
             shuffle=config.data.shuffle,
-            seed=42  # Fixed seed for reproducibility
-        ),
+            seed=42
+        )
+
+    # Create samplers for distributed training
+    samplers = {
+        "train": train_sampler,
         "val": DistributedSampler(
             joslin_data["val"],
             num_replicas=world_size,
@@ -250,16 +297,8 @@ def train_on_device(rank, world_size, config):
             dataloader_kwargs['prefetch_factor'] = prefetch_factor
         
         joslin_dataloaders = {
-            "train": DataLoader(
-                joslin_data["train"],
-                sampler=samplers["train"],
-                **dataloader_kwargs
-            ),
-            "val": DataLoader(
-                joslin_data["val"],
-                sampler=samplers["val"],
-                **dataloader_kwargs
-            )
+            "train": DataLoader(joslin_data["train"], sampler=train_sampler, **dataloader_kwargs),
+            "val": DataLoader(joslin_data["val"], sampler=samplers["val"], **dataloader_kwargs),
         }
         
         dataloader_time = time.time() - dataloader_start_time
