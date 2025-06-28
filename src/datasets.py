@@ -27,7 +27,7 @@ class JoslinData(Dataset):
         # self.img_labels = self.img_labels.iloc[:1000, :]  # Limit to first 1000 samples
         self.transform = transform
         # self.label_map = {'NMTM': 0, 'MTM': 1}
-        self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
+        # self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
         
         # Pre-compute image paths for faster access
         self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpeg") 
@@ -53,22 +53,22 @@ class JoslinData(Dataset):
         """Get image and label for a given index with robust error handling"""
         img_path = self.img_paths[idx]
         
-        try:
-            # Open and transform image
-            image = Image.open(img_path)
-            image_transformed = self.transform(image) if self.transform else image
-            
-            # Get label
-            label = self.img_labels.iloc[idx, 1]
-            label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
-            # label_tensor = torch.tensor(label, dtype=torch.long)
+        # try:
+        # Open and transform image
+        image = Image.open(img_path)
+        image_transformed = self.transform(image) if self.transform else image
         
-            return image_transformed, label_tensor
+        # Get label
+        label = self.img_labels.iloc[idx, 1]
+        # label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
+        label_tensor = torch.tensor(label, dtype=torch.long)
+        
+        return image_transformed, label_tensor
             
-        except Exception as e:
-            logging.warning(f"Error in __getitem__ for {img_path}: {str(e)}")
-            # Return fallback tensor with expected shape
-            return torch.zeros((3, 224, 224)), torch.tensor(0, dtype=torch.long)
+        # except Exception as e:
+        #     logging.warning(f"Error in __getitem__ for {img_path}: {str(e)}")
+        #     # Return fallback tensor with expected shape
+        #     return torch.zeros((3, 224, 224)), torch.tensor(0, dtype=torch.long)
 
 
 def get_transforms(augmentation_strength='moderate', resolution=224):

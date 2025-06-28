@@ -200,8 +200,9 @@ def train_on_device(rank, world_size, config):
         if rank == 0:
             logger.info(f"Using WeightedRandomSampler with target minority ratio: {target_ratio}")
 
-        label_map = joslin_data["train"].dataset.label_map
-        labels = [label_map[l] for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+        # label_map = joslin_data["train"].dataset.label_map
+        # labels = [label_map[l] for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+        labels = [l for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
 
         n_major = sum(1 for l in labels if l == 0)
         n_minor = len(labels) - n_major
