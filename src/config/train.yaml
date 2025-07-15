@@ -7,12 +7,12 @@ criterion:
   alpha: 0.25
   class_weights:
   - 1.0
-  - 13.0
+  - 17.0
   gamma: 2.0
   type: cross_entropy
   use_class_weights: true
 data:
-  annotations_file_name: MTM_dr_
+  annotations_file_name: clean_MTM_dr_
   augmentation:
     enabled: true
     strength: moderate
@@ -50,10 +50,10 @@ experiment_res_1024:
     resolution: 1024
   exp:
     checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res1024
-    checkpoint_name: epoch_23.pth
+    checkpoint_name: ''
     experiment_name: swinv2_res1024
     master_port: 23450
-    num_epochs: 25
+    num_epochs: 30
   lr_scheduler:
     type: cosine
     warmup:
@@ -116,10 +116,10 @@ experiment_res_384:
     world_size: 1
   exp:
     checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res384
-    checkpoint_name: epoch_23.pth
+    checkpoint_name: ''
     experiment_name: swinv2_res384
     master_port: 12355
-    num_epochs: 25
+    num_epochs: 30
   lr_scheduler:
     type: cosine
     warmup:
@@ -178,10 +178,10 @@ experiment_res_512:
     world_size: 1
   exp:
     checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res512
-    checkpoint_name: epoch_23.pth
+    checkpoint_name: ''
     experiment_name: swinv2_res512
     master_port: 12346
-    num_epochs: 25
+    num_epochs: 30
   lr_scheduler:
     type: cosine
     warmup:

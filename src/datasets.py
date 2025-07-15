@@ -26,11 +26,11 @@ class JoslinData(Dataset):
         self.img_labels = pd.read_csv(os.path.join(data_dir, annotations_file), index_col=0)
         # self.img_labels = self.img_labels.iloc[:1000, :]  # Limit to first 1000 samples
         self.transform = transform
-        # self.label_map = {'NMTM': 0, 'MTM': 1}
+        self.label_map = {'NMTM': 0, 'MTM': 1}
         # self.label_map = {'NMTM (Non-Referable)': 0, 'MTM (Referable)': 1}
         
         # Pre-compute image paths for faster access
-        self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpeg") 
+        self.img_paths = [os.path.join(self.img_dir, f"{self.img_labels.iloc[idx, 0]}.jpg") 
                           for idx in range(len(self.img_labels))]
         
         # Log dataset statistics
@@ -60,8 +60,8 @@ class JoslinData(Dataset):
         
         # Get label
         label = self.img_labels.iloc[idx, 1]
-        # label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
-        label_tensor = torch.tensor(label, dtype=torch.long)
+        label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
+        # label_tensor = torch.tensor(label, dtype=torch.long)
         
         return image_transformed, label_tensor
             

@@ -137,13 +137,13 @@ def train_on_device(rank, world_size, config):
             "train": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "train.csv",
-                img_dir="Exports_02052025", # default: Exports_02052025
+                img_dir="clean_dataset_07012025", # default: Exports_02052025
                 transform=train_transform
             ),
             "val": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "val.csv",
-                img_dir="Exports_02052025", # default: Exports_02052025
+                img_dir="clean_dataset_07012025", # default: Exports_02052025
                 transform=val_transform
             )
         }
