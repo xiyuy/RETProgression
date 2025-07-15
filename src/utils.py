@@ -636,7 +636,7 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
         
         # Check early stopping based on validation metrics
         if early_stopping and 'val' in phase_results and rank == 0:
-            metric_name = early_stopping_params.get('metric', 'balanced_accuracy')
+            metric_name = early_stopping_params.get('metric', 'f1_score')
             metric_value = phase_results['val'].get(metric_name, 0.0)
             
             # Call early stopping to check if we should stop
@@ -761,7 +761,14 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
                 best_checkpoint = torch.load(best_model_path)
                 model.load_state_dict(best_checkpoint['model_state_dict'])
                 logging.info("Loaded best model weights")
-    
+
+        # Write done.txt to signal completion
+        if checkpoint_dir:
+            done_path = os.path.join(checkpoint_dir, "done.txt")
+            with open(done_path, "w") as f:
+                f.write("Training completed successfully.\n")
+            logging.info(f"Created done.txt at {done_path}")
+
     # Broadcast best model to all processes
     if world_size > 1:
         # Wait for rank 0 to load best model

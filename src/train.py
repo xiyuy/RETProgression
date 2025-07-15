@@ -3,7 +3,7 @@ import os, logging, time, torch, sys, numpy as np
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler, Subset
 from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 from timm import create_model
@@ -15,7 +15,7 @@ matplotlib.use('Agg')  # Use non-interactive backend
 from datasets import JoslinData, get_transforms
 from loss_functions import get_loss_function
 from lr_schedulers import create_scheduler
-from utils_parallel import (
+from utils import (
     train_model_custom_progress, CachedDataset, 
     compute_metrics_from_confusion_matrix, EarlyStopping
 )
@@ -41,10 +41,10 @@ def safe_clear_directory(directory_path, logger=None):
             error_msg = f"Error clearing item {item_path}: {str(e)}"
             (logger.error if logger else logging.error)(error_msg)
 
-def setup(rank, world_size):
+def setup(rank, world_size, config):
     """Initialize the distributed environment."""
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12346'
+    os.environ['MASTER_PORT'] = str(config.exp.master_port)
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
     if rank == 0:
         logging.info(f"Initialized process group with world_size={world_size}")
@@ -79,7 +79,7 @@ def configure_rank_logger(rank, log_dir):
 def train_on_device(rank, world_size, config):
     """Training function to run on each GPU."""
     # Setup distributed environment
-    setup(rank, world_size)
+    setup(rank, world_size, config)
     
     # Set up process-specific logging
     logger = configure_rank_logger(rank, config.exp.checkpoint_dir)
@@ -137,13 +137,13 @@ def train_on_device(rank, world_size, config):
             "train": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "train.csv",
-                img_dir="images", # default: Exports_02052025
+                img_dir="clean_dataset_07012025", # default: Exports_02052025
                 transform=train_transform
             ),
             "val": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "val.csv",
-                img_dir="images", # default: Exports_02052025
+                img_dir="clean_dataset_07012025", # default: Exports_02052025
                 transform=val_transform
             )
         }
@@ -173,6 +173,11 @@ def train_on_device(rank, world_size, config):
         else:
             joslin_data = base_datasets
         
+        weighted_sampler_cfg = getattr(config.data, 'weighted_sampler', {})
+        use_weighted = weighted_sampler_cfg.get('enabled', False)
+        target_ratio = weighted_sampler_cfg.get('target_minority_ratio', 0.14)
+        generator_seed = weighted_sampler_cfg.get('generator_seed', 42)
+
         dataset_time = time.time() - dataset_start_time
         if rank == 0:
             logger.info(f"Datasets created in {dataset_time:.2f}s")
@@ -190,15 +195,58 @@ def train_on_device(rank, world_size, config):
         cleanup()
         return
     
-    # Create samplers for distributed training
-    samplers = {
-        "train": DistributedSampler(
+    # Compute sample weights and indices if use WeightedRandomSampelr
+    if use_weighted:
+        if rank == 0:
+            logger.info(f"Using WeightedRandomSampler with target minority ratio: {target_ratio}")
+
+        # label_map = joslin_data["train"].dataset.label_map
+        # labels = [label_map[l] for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+        labels = [l for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+
+        n_major = sum(1 for l in labels if l == 0)
+        n_minor = len(labels) - n_major
+
+        weight_major = (1.0 / n_major) * (1.0 - target_ratio)
+        weight_minor = (1.0 / n_minor) * target_ratio
+        weights = [weight_major if l == 0 else weight_minor for l in labels]
+
+        # Deterministic sampling
+        generator = torch.Generator()
+        generator.manual_seed(generator_seed)
+
+        weighted_sampler = WeightedRandomSampler(weights, num_samples=len(labels), replacement=True, generator=generator)
+        sampled_indices = list(weighted_sampler)
+
+        if rank == 0:
+            from collections import Counter
+            sampled_labels = [labels[i] for i in sampled_indices]
+            counter = Counter(sampled_labels)
+            actual_ratio = counter[1] / (counter[0] + counter[1])
+            logger.info(f"Sanity check: Sampled class counts = {dict(counter)}")
+            logger.info(f"Sanity check: Sampled minority ratio ≈ {actual_ratio:.3f} (target = {target_ratio})")
+
+        joslin_data["train"] = Subset(joslin_data["train"], sampled_indices)
+
+        train_sampler = DistributedSampler(
+            joslin_data["train"],
+            num_replicas=world_size,
+            rank=rank,
+            shuffle=True,
+            seed=42
+        )
+    else:
+        train_sampler = DistributedSampler(
             joslin_data["train"],
             num_replicas=world_size,
             rank=rank,
             shuffle=config.data.shuffle,
-            seed=42  # Fixed seed for reproducibility
-        ),
+            seed=42
+        )
+
+    # Create samplers for distributed training
+    samplers = {
+        "train": train_sampler,
         "val": DistributedSampler(
             joslin_data["val"],
             num_replicas=world_size,
@@ -250,16 +298,8 @@ def train_on_device(rank, world_size, config):
             dataloader_kwargs['prefetch_factor'] = prefetch_factor
         
         joslin_dataloaders = {
-            "train": DataLoader(
-                joslin_data["train"],
-                sampler=samplers["train"],
-                **dataloader_kwargs
-            ),
-            "val": DataLoader(
-                joslin_data["val"],
-                sampler=samplers["val"],
-                **dataloader_kwargs
-            )
+            "train": DataLoader(joslin_data["train"], sampler=train_sampler, **dataloader_kwargs),
+            "val": DataLoader(joslin_data["val"], sampler=samplers["val"], **dataloader_kwargs),
         }
         
         dataloader_time = time.time() - dataloader_start_time
@@ -290,7 +330,7 @@ def train_on_device(rank, world_size, config):
         img_size = getattr(config.model, 'img_size', getattr(config.data, 'resolution', 224))
         
         # Create model with configurable image size
-        if 'vit' in config.model.name.lower():
+        if 'vit' or 'swinv2' in config.model.name.lower():
             model = create_model(
                 config.model.name,
                 pretrained=config.model.pretrained,
@@ -494,7 +534,7 @@ def merge_experiment_config(base_config, experiment_name=None):
     
     return merged_config
 
-@hydra.main(config_path='config', config_name='pretrain_parallel', version_base="1.3")
+@hydra.main(config_path='config', config_name='train', version_base="1.3")
 def run(config):
     """Main entry point with improved distributed training setup"""
     # Get experiment name if specified
@@ -517,7 +557,7 @@ def run(config):
         os.makedirs(os.path.dirname(checkpoint_dir), exist_ok=True)
         
         # Check if directory exists and clear it
-        if os.path.exists(checkpoint_dir):
+        if os.path.exists(checkpoint_dir) and config.exp.checkpoint_name is None:
             logging.info(f"Checkpoint directory exists at {checkpoint_dir}, clearing contents...")
             safe_clear_directory(checkpoint_dir)
             logging.info(f"Checkpoint directory cleared successfully.")
@@ -529,7 +569,7 @@ def run(config):
     # Configure main logging
     main_log_file = os.path.join(
         config.exp.checkpoint_dir if hasattr(config.exp, 'checkpoint_dir') else '.',
-        'pretrain_parallel.log'
+        'train.log'
     )
     
     logging.basicConfig(

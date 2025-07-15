@@ -1,0 +1,261 @@
+caching:
+  enabled: true
+  prefetch_factor: 2
+  train_cache_size: 1000
+  val_cache_size: 1000
+criterion:
+  alpha: 0.25
+  class_weights:
+  - 1.0
+  - 17.0
+  gamma: 2.0
+  type: cross_entropy
+  use_class_weights: true
+data:
+  annotations_file_name: clean_MTM_dr_
+  augmentation:
+    enabled: true
+    strength: moderate
+  batch_size: 32
+  class_labels: MTM_binary_DR
+  data_dir: /projects/retprogression/
+  num_workers: 7
+  resolution: 224
+  shuffle: true
+  weighted_sampler:
+    enabled: false
+    generator_seed: 42
+    target_minority_ratio: 0.07
+distributed:
+  backend: nccl
+  world_size: 1
+early_stopping:
+  enabled: true
+  metric: f1_score
+  min_delta: 0.001
+  mode: max
+  patience: 5
+exp:
+  checkpoint_dir: /home/yang.xiyu/Github/RETProgression/src/checkpoints/referable_GPU1_experiment
+  checkpoint_freq: 1
+  checkpoint_name: null
+  experiment_name: baseline
+  master_port: 12345
+  num_epochs: 1
+experiment_res_1024:
+  data:
+    augmentation:
+      strength: strong
+    batch_size: 4
+    resolution: 1024
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res1024
+    checkpoint_name: ''
+    experiment_name: swinv2_res1024
+    master_port: 23450
+    num_epochs: 30
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.15
+  model:
+    img_size: 1024
+    name: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 16
+    gradient_clipping: 0.5
+  optimizer:
+    lr: 5.0e-06
+experiment_res_1024_oversample_50:
+  criterion:
+    class_weights:
+    - 1.0
+    - 1.0
+    type: cross_entropy
+    use_class_weights: true
+  data:
+    augmentation:
+      strength: strong
+    batch_size: 4
+    resolution: 1024
+    weighted_sampler:
+      enabled: true
+      generator_seed: 42
+      target_minority_ratio: 0.5
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res1024_oversample50
+    checkpoint_name: epoch_23.pth
+    experiment_name: swinv2_res1024
+    master_port: 23450
+    num_epochs: 25
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.15
+  model:
+    img_size: 1024
+    name: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 16
+    gradient_clipping: 0.5
+  optimizer:
+    lr: 5.0e-06
+experiment_res_384:
+  data:
+    augmentation:
+      strength: moderate
+    batch_size: 32
+    resolution: 384
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res384
+    checkpoint_name: ''
+    experiment_name: swinv2_res384
+    master_port: 12355
+    num_epochs: 30
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 384
+    name: swinv2_base_window12to24_192to384
+  optimization:
+    gradient_accumulation_steps: 4
+  optimizer:
+    lr: 4.0e-05
+experiment_res_384_oversample_50:
+  criterion:
+    class_weights:
+    - 1.0
+    - 1.0
+    type: cross_entropy
+    use_class_weights: true
+  data:
+    augmentation:
+      strength: moderate
+    batch_size: 32
+    resolution: 384
+    weighted_sampler:
+      enabled: true
+      generator_seed: 42
+      target_minority_ratio: 0.5
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res384_oversample50
+    checkpoint_name: epoch_23.pth
+    experiment_name: swinv2_res384
+    master_port: 12355
+    num_epochs: 25
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 384
+    name: swinv2_base_window12to24_192to384
+  optimization:
+    gradient_accumulation_steps: 4
+  optimizer:
+    lr: 4.0e-05
+experiment_res_512:
+  data:
+    batch_size: 32
+    resolution: 512
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res512
+    checkpoint_name: ''
+    experiment_name: swinv2_res512
+    master_port: 12346
+    num_epochs: 30
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 512
+    name: swinv2_base_window16_256
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 3
+  optimizer:
+    lr: 3.0e-05
+experiment_res_512_oversample_50:
+  criterion:
+    class_weights:
+    - 1.0
+    - 1.0
+    type: cross_entropy
+    use_class_weights: true
+  data:
+    augmentation:
+      strength: moderate
+    batch_size: 32
+    resolution: 512
+    weighted_sampler:
+      enabled: true
+      generator_seed: 42
+      target_minority_ratio: 0.5
+  distributed:
+    world_size: 1
+  exp:
+    checkpoint_dir: /projects/retprogression/xiyu_yang/checkpoints/MTM_binary_swinv2_res512_oversample50
+    checkpoint_name: epoch_23.pth
+    experiment_name: swinv2_res512
+    master_port: 12346
+    num_epochs: 25
+  lr_scheduler:
+    type: cosine
+    warmup:
+      enabled: true
+      min_lr: 1.0e-07
+      warmup_proportion: 0.1
+  model:
+    img_size: 512
+    name: swinv2_base_window16_256
+  optimization:
+    amp_enabled: true
+    gradient_accumulation_steps: 3
+  optimizer:
+    lr: 3.0e-05
+lr_scheduler:
+  gamma: 0.1
+  step_size: 7
+  type: step
+  warmup:
+    enabled: false
+    min_lr: 1.0e-07
+    warmup_proportion: 0.1
+model:
+  name: vit_base_patch16_224
+  num_classes: 2
+  pretrained: true
+optimization:
+  amp_enabled: true
+  drop_last: true
+  gradient_accumulation_steps: 2
+  gradient_clipping: 1.0
+  sync_bn: false
+optimizer:
+  lr: 5.0e-05
+  momentum: 0.9
+  name: adam
+  weight_decay: 0.001
+profiling:
+  enabled: false

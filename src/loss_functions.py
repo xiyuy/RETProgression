@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import logging
+from omegaconf import ListConfig
 
 
 class FocalLoss(nn.Module):
@@ -111,11 +112,13 @@ def get_loss_function(config, device):
     # Default to cross entropy
     else:
         if use_class_weights:
-            # Get class weights if provided, otherwise use default
             if hasattr(config.criterion, 'class_weights'):
-                if isinstance(config.criterion.class_weights, (list, tuple)):
-                    class_weights = torch.tensor(config.criterion.class_weights)
+                class_weights_raw = config.criterion.class_weights
+
+                if isinstance(class_weights_raw, (list, tuple, ListConfig)):
+                    class_weights = torch.tensor(class_weights_raw)
                 else:
+                    logging.warning(f"Unsupported type for class_weights: {type(class_weights_raw)}. Using default.")
                     class_weights = default_class_weights
             else:
                 class_weights = default_class_weights

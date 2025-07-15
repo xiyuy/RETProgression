@@ -53,22 +53,22 @@ class JoslinData(Dataset):
         """Get image and label for a given index with robust error handling"""
         img_path = self.img_paths[idx]
         
-        try:
-            # Open and transform image
-            image = Image.open(img_path)
-            image_transformed = self.transform(image) if self.transform else image
+        # try:
+        # Open and transform image
+        image = Image.open(img_path)
+        image_transformed = self.transform(image) if self.transform else image
+        
+        # Get label
+        label = self.img_labels.iloc[idx, 1]
+        label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
+        # label_tensor = torch.tensor(label, dtype=torch.long)
+        
+        return image_transformed, label_tensor
             
-            # Get label
-            label = self.img_labels.iloc[idx, 1]
-            # label_tensor = torch.tensor(self.label_map[label], dtype=torch.long)
-            label_tensor = torch.tensor(label, dtype=torch.long)
-            
-            return image_transformed, label_tensor
-            
-        except Exception as e:
-            logging.warning(f"Error in __getitem__ for {img_path}: {str(e)}")
-            # Return fallback tensor with expected shape
-            return torch.zeros((3, 224, 224)), torch.tensor(0, dtype=torch.long)
+        # except Exception as e:
+        #     logging.warning(f"Error in __getitem__ for {img_path}: {str(e)}")
+        #     # Return fallback tensor with expected shape
+        #     return torch.zeros((3, 224, 224)), torch.tensor(0, dtype=torch.long)
 
 
 def get_transforms(augmentation_strength='moderate', resolution=224):
@@ -103,7 +103,7 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),
             transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),
             transforms.ToTensor(),
-            transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)),
+            # transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)), # Make sure augmentation is valid from the clinical perspective
         ])
     elif augmentation_strength == 'strong':
         train_transform = transforms.Compose([
@@ -114,7 +114,7 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
             transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.1),
             transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             transforms.ToTensor(),
-            transforms.RandomErasing(p=0.2, scale=(0.02, 0.2)),
+            # transforms.RandomErasing(p=0.2, scale=(0.02, 0.2)),
         ])
     else:
         raise ValueError(f"Unknown augmentation strength: {augmentation_strength}")
