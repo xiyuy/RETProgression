@@ -1,0 +1,54 @@
+========================================
+SLURM Job Information
+========================================
+Job ID: 1994290
+Job Name: val_inference_complete_test
+Node: d1013
+Start Time: Wed Sep 17 08:25:56 AM EDT 2025
+========================================
+Environment Check:
+Python location: /projects/retprogression/pytorch_cu121_env/bin/python
+CUDA available: True
+GPU count: 1
+GPU name: Tesla V100-SXM2-32GB
+Using CUDA device: 0
+
+========================================
+VALIDATION CONFIGURATION
+========================================
+Checkpoint: /projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth
+Data directory: /projects/retprogression
+Annotations file: complete_gradable_dr_test.csv
+Image directory: complete_cropped1024_brightness_09112025
+Output directory: /projects/retprogression/rgarridogarcia/validation_results_20250917_082610
+Model: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+Image size: 1024
+Batch size: 16
+Workers: 4
+========================================
+
+Starting validation inference...
+
+Python path: /home/r.garridogarcia/MIGHTE/retprogression/swinV2/RETProgression/src:
+
+========================================
+VALIDATION COMPLETED SUCCESSFULLY!
+========================================
+End Time: Wed Sep 17 01:45:00 PM EDT 2025
+Output directory: /projects/retprogression/rgarridogarcia/validation_results_20250917_082610
+
+Output files:
+-rw-rw----+ 1 r.garridogarcia retprogression 264 Sep 17 13:44 /projects/retprogression/rgarridogarcia/validation_results_20250917_082610/metrics_best_balanced_acc_model.csv
+-rw-rw----+ 1 r.garridogarcia retprogression 13M Sep 17 13:44 /projects/retprogression/rgarridogarcia/validation_results_20250917_082610/predictions_best_balanced_acc_model.csv
+
+Predictions summary:
+106880 /projects/retprogression/rgarridogarcia/validation_results_20250917_082610/predictions_best_balanced_acc_model.csv
+
+Performance metrics:
+total_samples,accuracy,balanced_accuracy,sensitivity,specificity,precision,f1_score,auc_roc,TP,FP,FN,TN
+106879,0.7631714368585035,0.8543716604378392,0.7565465814448964,0.952196739430782,0.9977903798503078,0.8605814248102494,0.9367972887407406,78121,173,25139,3446
+
+========================================
+Job completed at Wed Sep 17 01:45:00 PM EDT 2025
+Total runtime: 19144 seconds
+========================================

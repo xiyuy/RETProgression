@@ -1,0 +1,10 @@
+Experiment,Balanced Acc,F1 Score,Epoch,ROC AUC,Sensitivity,Specificity,TP,FP,FN,TN
+clean_gradable_swinv2_resolution512_oversample50_cropped__ROC AUC,0.90745,0.9674,11,0.9607,0.9399,0.875,3752,13,240,91
+clean_gradable_swinv2_resolution512_oversample50__Balanced Acc,0.901,0.9655,23,0.9555,0.9366,0.8654,3739,14,253,90
+clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped__ROC AUC,0.9132,0.9635,16,0.9743,0.9322,0.8942,3740,11,272,93
+clean_gradable_swinv2_resolution512_oversample50_cropped__Balanced Acc,0.90785,0.9628,6,0.9518,0.9311,0.8846,3717,12,275,92
+clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped__Balanced Acc,0.9196,0.9603,11,0.973,0.9257,0.9135,3714,9,298,95
+clean_gradable_swinv2_resolution1024_oversample50_moderateAug___Balanced Acc,0.8886499999999999,0.9573,15,0.9498,0.9215,0.8558,3697,15,315,89
+clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter__ROC AUC,0.91945,0.955,15,0.9742,0.9158,0.9231,3674,8,338,96
+clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter__Balanced Acc,0.9302,0.9514,8,0.9735,0.9085,0.9519,3645,5,367,99
+clean_gradable_swinv2_resolution384_oversample50_cropped__Balanced Acc,0.8855,0.9436,2,0.9538,0.896,0.875,3577,13,415,91

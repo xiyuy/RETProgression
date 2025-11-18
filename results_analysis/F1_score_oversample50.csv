@@ -1,0 +1,4 @@
+Experiment,F1 Score,Epoch,ROC AUC,Sensitivity,Specificity,TP,FP,FN,TN,Balanced Acc
+clean_gradable_swinv2_resolution512_oversample50,0.9875,18,0.8888,0.9865,0.5577,3938,46,54,58,0.7721
+clean_gradable_swinv2_resolution384_oversample50,0.9867,15,0.8774,0.9885,0.4231,3946,60,46,44,0.7058
+clean_gradable_swinv2_resolution1024_oversample50,0.9753,16,0.957,0.9564,0.8173,3837,19,175,85,0.88685

@@ -1,0 +1,38 @@
+[1;34m[INFO][0m Starting robust prediction run at Mon Nov 10 02:52:06 PM EST 2025
+[1;34m[INFO][0m Configuration:
+[1;34m[INFO][0m   Checkpoint: /projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth
+[1;34m[INFO][0m   Data directory: /projects/retprogression
+[1;34m[INFO][0m   Annotations: clean_gradable_dr_test.csv
+[1;34m[INFO][0m   Image directory: cropped1024_brightness_noresize_dataset_08202025
+[1;34m[INFO][0m   Output directory: /projects/retprogression/rgarridogarcia/clean_dr_test_inference_20251110_145206
+[1;34m[INFO][0m   Model: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+[1;34m[INFO][0m   Image size: 1024
+[1;34m[INFO][0m   Batch size: 32
+[1;34m[INFO][0m   Workers: 0
+[1;34m[INFO][0m Configuration saved to /projects/retprogression/rgarridogarcia/clean_dr_test_inference_20251110_145206/config.txt
+[1;34m[INFO][0m Activating conda environment...
+[1;34m[INFO][0m CUDA is available, using GPU
+[1;34m[INFO][0m Running robust predictions...
+[1;32m[SUCCESS][0m Predictions completed successfully!
+[1;34m[INFO][0m Results saved to: /projects/retprogression/rgarridogarcia/clean_dr_test_inference_20251110_145206
+[1;34m[INFO][0m Generated files:
+-rw-rw----+ 1 r.garridogarcia retprogression  255 Nov 10 14:57 /projects/retprogression/rgarridogarcia/clean_dr_test_inference_20251110_145206/metrics_best_balanced_acc_model.csv
+-rw-rw----+ 1 r.garridogarcia retprogression 491K Nov 10 14:57 /projects/retprogression/rgarridogarcia/clean_dr_test_inference_20251110_145206/predictions_best_balanced_acc_model.csv
+[1;34m[INFO][0m Predictions file: predictions_best_balanced_acc_model.csv (4283 lines)
+[1;34m[INFO][0m Preview of predictions (first 5 rows):
+image_id  original_index  true_label  predicted_label  prob_class_0           prob_class_1          logit_0              logit_1              logit_margin         correct
+50791     0               0           0                0.996512234210968      0.00348783191293478   2.7740156650543213   -2.8809654712677     -5.6549811363220215  True
+50795     1               0           0                0.9932869076728821     0.006713131908327341  2.4503917694091797   -2.5465621948242188  -4.996953964233398   True
+51743     2               1           0                0.9410789012908936     0.05892106890678406   1.3689265251159668   -1.4019017219543457  -2.7708282470703125  False
+51747     3               1           0                0.761701762676239      0.2382981926202774    0.39082878828048706  -0.7712035775184631  -1.1620323657989502  False
+52530     4               1           1                0.0008840181981213391  0.9991160035133362    -3.7427594661712646  3.287388801574707    7.030148506164551    True
+[1;34m[INFO][0m Metrics summary:
+  accuracy: 0.9157
+  balanced_accuracy: 0.9246
+  sensitivity: 0.9152
+  specificity: 0.9340
+  precision: 0.9982
+  f1_score: 0.9549
+  auc_roc: 0.9834
+[1;32m[SUCCESS][0m Script completed at Mon Nov 10 02:57:20 PM EST 2025
+[1;34m[INFO][0m All results are in: /projects/retprogression/rgarridogarcia/clean_dr_test_inference_20251110_145206

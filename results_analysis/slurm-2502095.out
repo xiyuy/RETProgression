@@ -1,0 +1,38 @@
+[1;34m[INFO][0m Starting robust prediction run at Wed Oct 29 09:02:00 AM EDT 2025
+[1;34m[INFO][0m Configuration:
+[1;34m[INFO][0m   Checkpoint: /projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth
+[1;34m[INFO][0m   Data directory: /projects/retprogression
+[1;34m[INFO][0m   Annotations: gradable_dr_new_5k_test.csv
+[1;34m[INFO][0m   Image directory: test_cropped1024_oldcentered_wt_10272025
+[1;34m[INFO][0m   Output directory: /projects/retprogression/rgarridogarcia/5k_test_inference_20251029_090200
+[1;34m[INFO][0m   Model: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+[1;34m[INFO][0m   Image size: 1024
+[1;34m[INFO][0m   Batch size: 32
+[1;34m[INFO][0m   Workers: 0
+[1;34m[INFO][0m Configuration saved to /projects/retprogression/rgarridogarcia/5k_test_inference_20251029_090200/config.txt
+[1;34m[INFO][0m Activating conda environment...
+[1;34m[INFO][0m CUDA is available, using GPU
+[1;34m[INFO][0m Running robust predictions...
+[1;32m[SUCCESS][0m Predictions completed successfully!
+[1;34m[INFO][0m Results saved to: /projects/retprogression/rgarridogarcia/5k_test_inference_20251029_090200
+[1;34m[INFO][0m Generated files:
+-rw-rw----+ 1 r.garridogarcia retprogression  256 Oct 29 09:09 /projects/retprogression/rgarridogarcia/5k_test_inference_20251029_090200/metrics_best_balanced_acc_model.csv
+-rw-rw----+ 1 r.garridogarcia retprogression 678K Oct 29 09:09 /projects/retprogression/rgarridogarcia/5k_test_inference_20251029_090200/predictions_best_balanced_acc_model.csv
+[1;34m[INFO][0m Predictions file: predictions_best_balanced_acc_model.csv (5913 lines)
+[1;34m[INFO][0m Preview of predictions (first 5 rows):
+image_id  original_index  true_label  predicted_label  prob_class_0          prob_class_1        logit_0              logit_1             logit_margin        correct
+605221    0               1           1                0.07441265136003494   0.9255872964859009  -1.4796026945114136  1.0411999225616455  2.5208024978637695  True
+605222    1               1           1                0.04956161230802536   0.950438380241394   -1.7177196741104126  1.2359871864318848  2.953706741333008   True
+605223    2               1           1                0.010150830261409283  0.9898490905761719  -2.3804781436920166  2.1995186805725098  4.5799970626831055  True
+605224    3               1           1                0.019950654357671738  0.9800493717193604  -2.0934109687805176  1.8009300231933594  3.894340991973877   True
+605225    4               1           1                0.011406546458601952  0.9885934591293335  -2.4803383350372314  1.981757402420044   4.462095737457275   True
+[1;34m[INFO][0m Metrics summary:
+  accuracy: 0.8505
+  balanced_accuracy: 0.8248
+  sensitivity: 0.8515
+  specificity: 0.7982
+  precision: 0.9956
+  f1_score: 0.9179
+  auc_roc: 0.8721
+[1;32m[SUCCESS][0m Script completed at Wed Oct 29 09:09:06 AM EDT 2025
+[1;34m[INFO][0m All results are in: /projects/retprogression/rgarridogarcia/5k_test_inference_20251029_090200

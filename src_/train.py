@@ -98,20 +98,20 @@ def train_on_device(rank, world_size, config):
         logger.info(f"Experiment name: {getattr(config.exp, 'experiment_name', 'default')}")
     
     # Get data augmentation settings
-    augmentation_config = getattr(config.data, 'augmentation', {})
-    augmentation_enabled = augmentation_config.get('enabled', True)
-    augmentation_type = augmentation_config.get('type', 'all')
+    augmentation_enabled = getattr(config.data, 'augmentation', {}).get('enabled', True)
+    augmentation_strength = getattr(config.data, 'augmentation', {}).get('strength', 'moderate')
     resolution = getattr(config.data, 'resolution', 224)
-
+    
     if not augmentation_enabled:
-        augmentation_type = 'none'
-
+        augmentation_strength = 'none'
+    
     if rank == 0:
-        logger.info(f"Data augmentation type: {augmentation_type}")
+        logger.info(f"Data augmentation: {augmentation_strength}")
         logger.info(f"Image resolution: {resolution}x{resolution}")
-
-    transforms_dict = get_transforms(augmentation_type, resolution=resolution)
-    train_transform = transforms_dict['train']  # Add this line
+    
+    # Get transforms based on augmentation settings
+    transforms_dict = get_transforms(augmentation_strength, resolution=resolution)
+    train_transform = transforms_dict['train']
     val_transform = transforms_dict['val']
     
     # Define GPU normalization transform
@@ -133,27 +133,20 @@ def train_on_device(rank, world_size, config):
         cache_enabled = getattr(config.caching, 'enabled', True) if hasattr(config, 'caching') else True
         
         # Create base datasets
-        # Get img_dir from config with fallback
-        img_dir = getattr(config.data, 'img_dir', 'cropped_dataset_07082025')
-
-        if rank == 0:
-            logger.info(f"Using image directory: {img_dir}")
-
         base_datasets = {
             "train": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "train.csv",
-                img_dir=img_dir,  # <-- NOW FLEXIBLE
+                img_dir="cropped_dataset_07082025", #clean_brightness_dataset_08202025 #cropped1024_brightness_noresize_dataset_08202025 #cropped1024_noresize_dataset_08202025 # clean_dataset_07012025  # cropped_dataset_07082025
                 transform=train_transform
             ),
             "val": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "val.csv",
-                img_dir=img_dir,  # <-- NOW FLEXIBLE
+                img_dir="cropped_dataset_07082025", # clean_brightness_dataset_08202025#cropped1024_brightness_noresize_dataset_08202025 #cropped1024_noresize_dataset_08202025 # clean_dataset_07012025  # cropped_dataset_07082025 
                 transform=val_transform
             )
         }
-        
         
         # Cache settings - proportional to dataset size to avoid memory issues
         train_cache_size = min(len(base_datasets["train"]), train_cache_size)
@@ -396,8 +389,7 @@ def train_on_device(rank, world_size, config):
         return
     
     # Configure loss function
-    #criterion = get_loss_function(config, device)
-    criterion = get_loss_function(config, device, train_dataset=joslin_data['train'])
+    criterion = get_loss_function(config, device)
     
     # Create optimizer
     if config.optimizer.name == "adam":

@@ -1,0 +1,21 @@
+Python location: /projects/retprogression/pytorch_cu121_env/bin/python
+CUDA available: True
+GPU count: 1
+Visible GPUs: 0
+========================================
+VALIDATION INFERENCE CONFIGURATION
+========================================
+Checkpoint: /projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth
+Data directory: /projects/retprogression/
+Annotations file: gradable_dr_val.csv
+Output directory: /projects/retprogression/rgarridogarcia/complete_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter
+Batch size: 8
+Resolution: 1024
+Model: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+========================================
+Traceback (most recent call last):
+  File "/home/r.garridogarcia/MIGHTE/retprogression/swinV2/RETProgression/results_analysis/validation_inference.py", line 12, in <module>
+    from datasets import JoslinData, get_transforms
+ModuleNotFoundError: No module named 'datasets'
+/var/spool/slurmd/job1985343/slurm_script: line 88: --device: command not found
+ERROR: Validation inference failed!

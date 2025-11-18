@@ -67,7 +67,7 @@ class FocalLoss(nn.Module):
             return loss
 
 
-'''def get_loss_function(config, device):
+def get_loss_function(config, device):
     """
     Factory function to create loss function based on configuration.
     
@@ -129,48 +129,4 @@ class FocalLoss(nn.Module):
         
         else:
             logging.info("Using standard Cross Entropy loss")
-            return nn.CrossEntropyLoss()'''
-            
-def get_loss_function(config, device, train_dataset=None):
-    """
-    Factory function to create loss function based on configuration.
-    
-    Args:
-        config: Configuration with loss parameters
-        device: Device to place tensors on
-        train_dataset: Training dataset (optional, for auto-computing weights)
-    
-    Returns:
-        Loss function
-    """
-    # Get loss type from config, default to cross_entropy
-    has_criterion = hasattr(config, 'criterion')
-    loss_type = getattr(config.criterion, 'type', 'cross_entropy') if has_criterion else 'cross_entropy'
-    
-    # Create appropriate loss function
-    if loss_type == 'focal_loss':
-        # Get focal loss parameters
-        alpha = getattr(config.criterion, 'alpha', 0.25) if has_criterion else 0.25
-        gamma = getattr(config.criterion, 'gamma', 2.0) if has_criterion else 2.0
-        
-        # Create focal loss
-        focal_loss = FocalLoss(alpha=alpha, gamma=gamma)
-        
-        logging.info(f"Using Focal Loss (alpha={alpha}, gamma={gamma})")
-        return focal_loss
-    
-    # Default to cross entropy
-    else:
-        # Import the weight computation utility
-        from compute_class_weights import get_class_weights_from_config
-        
-        # Get class weights (auto-computed or from config)
-        class_weights = get_class_weights_from_config(config, train_dataset, device)
-        
-        # Check if weights are equal (balanced)
-        if torch.all(class_weights == class_weights[0]):
-            logging.info("Using standard Cross Entropy loss (equal weights)")
             return nn.CrossEntropyLoss()
-        else:
-            logging.info(f"Using weighted Cross Entropy loss with class weights: {class_weights}")
-            return nn.CrossEntropyLoss(weight=class_weights)

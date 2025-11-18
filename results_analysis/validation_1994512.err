@@ -1,0 +1,62 @@
+[2025-09-17 08:55:18,353] INFO: Starting predictions - 2025-09-17 08:55:18
+[2025-09-17 08:55:18,353] INFO: Using device: cuda
+[2025-09-17 08:55:18,353] INFO: Loading model: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+[2025-09-17 08:55:23,348] INFO: Model loaded from: /projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth
+[2025-09-17 08:55:23,359] INFO: CSV loaded: 4282 rows
+[2025-09-17 08:55:23,359] INFO: Columns: ['Unnamed: 0', 'ID', 'gradable_binary_DR', 'JVN_PATIENT_ID']
+[2025-09-17 08:55:23,359] INFO: Checking file availability...
+[2025-09-17 08:55:23,359] INFO: First 5 IDs from 'ID' column: [50791, 50795, 51743, 51747, 52530]
+[2025-09-17 08:55:27,099] INFO: Found 4282 valid images out of 4282 total
+[2025-09-17 08:55:27,102] INFO: Class distribution in valid samples:
+[2025-09-17 08:55:27,102] INFO:   Class 0: 106 samples (2.5%)
+[2025-09-17 08:55:27,102] INFO:   Class 1: 4176 samples (97.5%)
+[2025-09-17 08:55:27,104] INFO: Running predictions on 4282 samples...
+[2025-09-17 08:55:58,656] INFO: Progress: 3.7% (160/4282) | Batch: 10/268 | Speed: 5.1 samples/sec | ETA: 813s
+[2025-09-17 08:56:27,559] INFO: Progress: 7.5% (320/4282) | Batch: 20/268 | Speed: 5.3 samples/sec | ETA: 749s
+[2025-09-17 08:56:56,574] INFO: Progress: 11.2% (480/4282) | Batch: 30/268 | Speed: 5.4 samples/sec | ETA: 709s
+[2025-09-17 08:57:25,578] INFO: Progress: 14.9% (640/4282) | Batch: 40/268 | Speed: 5.4 samples/sec | ETA: 674s
+[2025-09-17 08:57:54,567] INFO: Progress: 18.7% (800/4282) | Batch: 50/268 | Speed: 5.4 samples/sec | ETA: 642s
+[2025-09-17 08:58:23,495] INFO: Progress: 22.4% (960/4282) | Batch: 60/268 | Speed: 5.4 samples/sec | ETA: 610s
+[2025-09-17 08:58:52,401] INFO: Progress: 26.2% (1120/4282) | Batch: 70/268 | Speed: 5.5 samples/sec | ETA: 580s
+[2025-09-17 08:59:21,267] INFO: Progress: 29.9% (1280/4282) | Batch: 80/268 | Speed: 5.5 samples/sec | ETA: 549s
+[2025-09-17 08:59:50,125] INFO: Progress: 33.6% (1440/4282) | Batch: 90/268 | Speed: 5.5 samples/sec | ETA: 519s
+[2025-09-17 09:00:18,955] INFO: Progress: 37.4% (1600/4282) | Batch: 100/268 | Speed: 5.5 samples/sec | ETA: 489s
+[2025-09-17 09:00:47,798] INFO: Progress: 41.1% (1760/4282) | Batch: 110/268 | Speed: 5.5 samples/sec | ETA: 460s
+[2025-09-17 09:01:16,629] INFO: Progress: 44.8% (1920/4282) | Batch: 120/268 | Speed: 5.5 samples/sec | ETA: 430s
+[2025-09-17 09:01:45,471] INFO: Progress: 48.6% (2080/4282) | Batch: 130/268 | Speed: 5.5 samples/sec | ETA: 401s
+[2025-09-17 09:02:14,310] INFO: Progress: 52.3% (2240/4282) | Batch: 140/268 | Speed: 5.5 samples/sec | ETA: 371s
+[2025-09-17 09:02:43,138] INFO: Progress: 56.0% (2400/4282) | Batch: 150/268 | Speed: 5.5 samples/sec | ETA: 342s
+[2025-09-17 09:03:11,979] INFO: Progress: 59.8% (2560/4282) | Batch: 160/268 | Speed: 5.5 samples/sec | ETA: 313s
+[2025-09-17 09:03:40,804] INFO: Progress: 63.5% (2720/4282) | Batch: 170/268 | Speed: 5.5 samples/sec | ETA: 284s
+[2025-09-17 09:04:09,627] INFO: Progress: 67.3% (2880/4282) | Batch: 180/268 | Speed: 5.5 samples/sec | ETA: 254s
+[2025-09-17 09:04:38,488] INFO: Progress: 71.0% (3040/4282) | Batch: 190/268 | Speed: 5.5 samples/sec | ETA: 225s
+[2025-09-17 09:05:07,337] INFO: Progress: 74.7% (3200/4282) | Batch: 200/268 | Speed: 5.5 samples/sec | ETA: 196s
+[2025-09-17 09:05:36,199] INFO: Progress: 78.5% (3360/4282) | Batch: 210/268 | Speed: 5.5 samples/sec | ETA: 167s
+[2025-09-17 09:06:05,033] INFO: Progress: 82.2% (3520/4282) | Batch: 220/268 | Speed: 5.5 samples/sec | ETA: 138s
+[2025-09-17 09:06:33,876] INFO: Progress: 85.9% (3680/4282) | Batch: 230/268 | Speed: 5.5 samples/sec | ETA: 109s
+[2025-09-17 09:07:02,732] INFO: Progress: 89.7% (3840/4282) | Batch: 240/268 | Speed: 5.5 samples/sec | ETA: 80s
+[2025-09-17 09:07:31,603] INFO: Progress: 93.4% (4000/4282) | Batch: 250/268 | Speed: 5.5 samples/sec | ETA: 51s
+[2025-09-17 09:08:00,448] INFO: Progress: 97.2% (4160/4282) | Batch: 260/268 | Speed: 5.5 samples/sec | ETA: 22s
+[2025-09-17 09:08:22,463] INFO: Progress: 100.0% (4282/4282) | Batch: 268/268 | Speed: 5.5 samples/sec | ETA: 0s
+[2025-09-17 09:08:22,531] INFO: Predictions completed in 775.4 seconds
+[2025-09-17 09:08:22,593] INFO: Predictions saved to: /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/test_results_20250917_085511/predictions_best_balanced_acc_model.csv
+[2025-09-17 09:08:22,614] INFO: Metrics saved to: /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/test_results_20250917_085511/metrics_best_balanced_acc_model.csv
+[2025-09-17 09:08:22,614] INFO: 
+==================================================
+[2025-09-17 09:08:22,614] INFO: PERFORMANCE METRICS:
+[2025-09-17 09:08:22,614] INFO: ==================================================
+[2025-09-17 09:08:22,616] INFO: accuracy            : 0.9157
+[2025-09-17 09:08:22,616] INFO: balanced_accuracy   : 0.9246
+[2025-09-17 09:08:22,616] INFO: sensitivity         : 0.9152
+[2025-09-17 09:08:22,616] INFO: specificity         : 0.9340
+[2025-09-17 09:08:22,616] INFO: precision           : 0.9982
+[2025-09-17 09:08:22,616] INFO: f1_score            : 0.9549
+[2025-09-17 09:08:22,616] INFO: auc_roc             : 0.9834
+[2025-09-17 09:08:22,616] INFO: 
+Confusion Matrix:
+[2025-09-17 09:08:22,616] INFO:   TP=3822, FP=7
+[2025-09-17 09:08:22,616] INFO:   FN=354, TN=99
+[2025-09-17 09:08:22,616] INFO: 
+==================================================
+[2025-09-17 09:08:22,616] INFO: COMPLETED SUCCESSFULLY
+[2025-09-17 09:08:22,616] INFO: ==================================================

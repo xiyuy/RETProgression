@@ -1,0 +1,54 @@
+========================================
+SLURM Job Information
+========================================
+Job ID: 1994513
+Job Name: val_inference_complete_test
+Node: d4053
+Start Time: Wed Sep 17 08:55:02 AM EDT 2025
+========================================
+Environment Check:
+Python location: /projects/retprogression/pytorch_cu121_env/bin/python
+CUDA available: True
+GPU count: 1
+GPU name: NVIDIA H200
+Using CUDA device: 0
+
+========================================
+VALIDATION CONFIGURATION
+========================================
+Checkpoint: /projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth
+Data directory: /projects/retprogression
+Annotations file: clean_gradable_dr_val.csv
+Image directory: cropped1024_brightness_noresize_dataset_08202025
+Output directory: /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/val_results_20250917_085511
+Model: swinv2_large_window12to16_192to256.ms_in22k_ft_in1k
+Image size: 1024
+Batch size: 16
+Workers: 4
+========================================
+
+Starting validation inference...
+
+Python path: /home/r.garridogarcia/MIGHTE/retprogression/swinV2/RETProgression/src:
+
+========================================
+VALIDATION COMPLETED SUCCESSFULLY!
+========================================
+End Time: Wed Sep 17 08:58:53 AM EDT 2025
+Output directory: /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/val_results_20250917_085511
+
+Output files:
+-rw-rw----+ 1 r.garridogarcia retprogression  255 Sep 17 08:58 /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/val_results_20250917_085511/metrics_best_balanced_acc_model.csv
+-rw-rw----+ 1 r.garridogarcia retprogression 472K Sep 17 08:58 /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/val_results_20250917_085511/predictions_best_balanced_acc_model.csv
+
+Predictions summary:
+4117 /projects/retprogression/rgarridogarcia/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/val_results_20250917_085511/predictions_best_balanced_acc_model.csv
+
+Performance metrics:
+total_samples,accuracy,balanced_accuracy,sensitivity,specificity,precision,f1_score,auc_roc,TP,FP,FN,TN
+4116,0.9096209912536443,0.9302237518214587,0.9085244267198405,0.9519230769230769,0.9986301369863013,0.951448707909162,0.9735265357772834,3645,5,367,99
+
+========================================
+Job completed at Wed Sep 17 08:58:53 AM EDT 2025
+Total runtime: 231 seconds
+========================================

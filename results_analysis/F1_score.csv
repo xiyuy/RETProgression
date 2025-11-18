@@ -1,0 +1,10 @@
+Experiment,F1 Score,Epoch,ROC AUC Score,Sensitivity,Specificity,TP,FP,FN,TN
+clean_gradable_swinv2_resolution1024,0.9872,0,0.542,1.0,0.0,4012,104,0,0
+clean_gradable_swinv2_resolution1024_oversample50,0.9708,16,0.9554,0.9474,0.8269,3801,18,211,86
+clean_gradable_swinv2_resolution1024_oversample50_cropped,0.9881,2,0.9383,0.9928,0.3558,3983,67,29,37
+clean_gradable_swinv2_resolution384,0.9901,8,0.9619,0.9996,0.2576,18763,366,8,127
+clean_gradable_swinv2_resolution384_oversample50,0.9951,19,0.9996,0.994,0.9961,9612,37,58,9557
+clean_gradable_swinv2_resolution384_oversample50_cropped,0.9952,23,0.9996,0.9953,0.995,9623,48,45,9548
+clean_gradable_swinv2_resolution512,0.9871,1,0.7646,1.0,0.0,3992,104,0,0
+clean_gradable_swinv2_resolution512_oversample50,0.9884,23,0.9981,0.9866,0.9902,9538,94,130,9502
+clean_gradable_swinv2_resolution512_oversample50_cropped,0.9888,18,0.9541,0.9877,0.6154,3943,40,49,64

@@ -1,0 +1,13 @@
+Experiment,Balanced Acc,F1 Score,Epoch,ROC AUC,Sensitivity,Specificity,TP,FP,FN,TN
+clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter,0.9301999999999999,0.9514,8,0.9735,0.9085,0.9519,3645,5,367,99
+clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped,0.9196,0.9603,11,0.973,0.9257,0.9135,3714,9,298,95
+clean_gradable_swinv2_resolution1024_oversample50_moderateAug,0.8925,0.9764,15,0.9555,0.9581,0.8269,3844,18,168,86
+clean_gradable_swinv2_resolution1024_oversample50_moderateAug_,0.8886499999999999,0.9573,15,0.9498,0.9215,0.8558,3697,15,315,89
+clean_gradable_swinv2_resolution1024_oversample50_BrightnessFilter,0.8874,0.971,16,0.9513,0.9479,0.8269,3803,18,209,86
+clean_gradable_swinv2_resolution1024_oversample50_,0.88715,0.9708,16,0.9554,0.9474,0.8269,3801,18,211,86
+clean_gradable_swinv2_resolution1024_oversample50_cropped_,0.8832,0.9565,12,0.9484,0.9202,0.8462,3692,16,320,88
+clean_gradable_swinv2_resolution384_oversample50_strongAug,0.8633,0.9653,20,0.9405,0.9381,0.7885,3745,22,247,82
+clean_gradable_swinv2_resolution384,0.5569500000000001,0.9879,8,0.9459,0.9985,0.1154,3986,92,6,12
+clean_gradable_swinv2_resolution512,0.5039,0.9864,0,0.721,0.9982,0.0096,3985,103,7,1
+clean_gradable_swinv2_resolution1024,0.5,0.9872,0,0.542,1.0,0.0,4012,104,0,0
+referable_GPU1_experiment,0.5,0.9871,0,0.9003,1.0,0.0,3992,104,0,0
