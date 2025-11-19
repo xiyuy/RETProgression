@@ -1,5 +1,4 @@
-import logging
-import os
+import os, json, logging
 import time
 import torch
 import random
@@ -222,29 +221,116 @@ def compute_metrics_from_confusion_matrix(true_positive, false_positive, false_n
         'balanced_accuracy': balanced_acc
     }
 
+# Old EarlyStopping
+# class EarlyStopping:
+#     """Early stops the training if validation metric doesn't improve after a given patience"""
+#     def __init__(self, patience=7, mode='max', min_delta=0, verbose=False):
+#         self.patience = patience
+#         self.mode = mode
+#         self.min_delta = min_delta
+#         self.verbose = verbose
+#         self.counter = 0
+#         self.best_score = None
+#         self.early_stop = False
+#         self.best_epoch = 0
+        
+#         # Set comparison function based on mode
+#         self.comparison = (lambda current, best: current < best - self.min_delta) if mode == 'min' else \
+#                           (lambda current, best: current > best + self.min_delta)
+    
+#     def __call__(self, epoch, metric_value):
+#         # First call
+#         if self.best_score is None:
+#             self.best_score = metric_value
+#             self.best_epoch = epoch
+#             return False
+        
+#         if self.comparison(metric_value, self.best_score):
+#             # Improvement
+#             self.best_score = metric_value
+#             self.best_epoch = epoch
+#             self.counter = 0
+#             if self.verbose:
+#                 logging.info(f'EarlyStopping: Metric improved to {metric_value:.6f}')
+#             return False
+#         else:
+#             # No improvement
+#             self.counter += 1
+#             if self.verbose:
+#                 logging.info(f'EarlyStopping: Counter {self.counter}/{self.patience}')
+#             if self.counter >= self.patience:
+#                 self.early_stop = True
+#                 logging.info(f'EarlyStopping: Triggered at epoch {epoch}. '
+#                             f'Best score was {self.best_score:.6f} at epoch {self.best_epoch}')
+#                 return True
+#             return False
+
+
 class EarlyStopping:
-    """Early stops the training if validation metric doesn't improve after a given patience"""
-    def __init__(self, patience=7, mode='max', min_delta=0, verbose=False):
-        self.patience = patience
-        self.mode = mode
-        self.min_delta = min_delta
-        self.verbose = verbose
-        self.counter = 0
+    """Early stops the training if validation metric doesn't improve after a given patience.
+       Persistence: saves/loads state to JSON so patience/best don't reset on resubmits."""
+    def __init__(self, patience=7, mode='max', min_delta=0.0, verbose=False, state_path=None, state=None):
+        self.patience   = patience
+        self.mode       = mode
+        self.min_delta  = min_delta
+        self.verbose    = verbose
+        self.counter    = 0
         self.best_score = None
         self.early_stop = False
         self.best_epoch = 0
-        
-        # Set comparison function based on mode
+        self.state_path = state_path  # NEW
+
+        # Comparison fn based on mode
         self.comparison = (lambda current, best: current < best - self.min_delta) if mode == 'min' else \
                           (lambda current, best: current > best + self.min_delta)
-    
+
+        # NEW: hydrate from prior state (explicit dict wins; otherwise try JSON file)
+        if state is not None:
+            self._load_from_state_dict(state)
+        elif self.state_path and os.path.isfile(self.state_path):
+            try:
+                with open(self.state_path, "r") as f:
+                    self._load_from_state_dict(json.load(f))
+            except Exception as e:
+                logging.warning(f"[EarlyStopping] Failed to read state from {self.state_path}: {e}")
+
+    # ---- persistence helpers ----
+    def _to_state_dict(self):
+        return {
+            "patience": self.patience,
+            "mode": self.mode,
+            "min_delta": self.min_delta,
+            "counter": self.counter,
+            "best_score": self.best_score,
+            "best_epoch": self.best_epoch,
+        }
+
+    def _load_from_state_dict(self, d):
+        self.patience   = d.get("patience", self.patience)
+        self.mode       = d.get("mode", self.mode)
+        self.min_delta  = d.get("min_delta", self.min_delta)
+        self.counter    = d.get("counter", 0)
+        self.best_score = d.get("best_score", None)
+        self.best_epoch = d.get("best_epoch", 0)
+
+    def _atomic_dump(self):
+        if not self.state_path:
+            return
+        tmp = f"{self.state_path}.tmp"
+        with open(tmp, "w") as f:
+            json.dump(self._to_state_dict(), f, indent=2)
+        os.replace(tmp, self.state_path)
+
+    # ---- main call ----
     def __call__(self, epoch, metric_value):
         # First call
         if self.best_score is None:
             self.best_score = metric_value
             self.best_epoch = epoch
+            self.counter = 0
+            self._atomic_dump()  # NEW: persist each call
             return False
-        
+
         if self.comparison(metric_value, self.best_score):
             # Improvement
             self.best_score = metric_value
@@ -252,6 +338,7 @@ class EarlyStopping:
             self.counter = 0
             if self.verbose:
                 logging.info(f'EarlyStopping: Metric improved to {metric_value:.6f}')
+            self._atomic_dump()  # NEW
             return False
         else:
             # No improvement
@@ -261,8 +348,10 @@ class EarlyStopping:
             if self.counter >= self.patience:
                 self.early_stop = True
                 logging.info(f'EarlyStopping: Triggered at epoch {epoch}. '
-                            f'Best score was {self.best_score:.6f} at epoch {self.best_epoch}')
+                             f'Best score was {self.best_score:.6f} at epoch {self.best_epoch}')
+                self._atomic_dump()  # NEW
                 return True
+            self._atomic_dump()  # NEW
             return False
 
 def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, optimizer, scheduler, 
@@ -274,15 +363,51 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
     since = time.time()
     start_epoch = 0
     best_metrics = {'acc': 0.0, 'f1': 0.0, 'balanced_acc': 0.0, 'auc': 0.0}
+    # Track full details at the epoch where each metric is best
+    best_details = {k: None for k in best_metrics}  # keys: 'acc','f1','balanced_acc','auc'
     
     # Set up checkpoint directory
-    if checkpoint_path:
-        checkpoint_dir = checkpoint_path if os.path.isdir(checkpoint_path) else os.path.dirname(checkpoint_path)
-    else:
-        checkpoint_dir = None
+    # if checkpoint_path:
+    #     checkpoint_dir = checkpoint_path if os.path.isdir(checkpoint_path) else os.path.dirname(checkpoint_path)
+    # else:
+    #     checkpoint_dir = None
     
+    # first_batch_printed = False
+
+    # Set up checkpoint directory (handle both dir or file paths) + ES JSON path
+    from pathlib import Path
+    if checkpoint_path:
+        p = Path(checkpoint_path)
+        ckpt_dir = p if p.is_dir() else p.parent
+    else:
+        ckpt_dir = None
+    if ckpt_dir is not None:
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        early_state_path = ckpt_dir / "early_stop_state.json"
+        checkpoint_dir = str(ckpt_dir)  # keep existing downstream uses working
+        # NEW: persist full best_details across resubmits
+        best_details_path = ckpt_dir / "best_details.json"
+    else:
+        early_state_path = None
+        checkpoint_dir = None
+        best_details_path = None
+
     first_batch_printed = False
     
+    # NEW: reload prior best_details if resuming
+    if rank == 0 and best_details_path is not None and best_details_path.exists():
+        try:
+            import json
+            with open(best_details_path, "r") as f:
+                prior = json.load(f)
+            # only accept expected keys
+            for k in best_details.keys():
+                if k in prior and isinstance(prior[k], dict):
+                    best_details[k] = prior[k]
+            logging.info(f"[Resume] Loaded best_details from {best_details_path}")
+        except Exception as e:
+            logging.warning(f"[Resume] Failed to load best_details: {e}")
+
     # Initialize mixed precision scaler if enabled
     scaler = torch.cuda.amp.GradScaler() if amp_enabled else None
     
@@ -296,7 +421,8 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
             patience=early_stopping_params.get('patience', 7),
             mode=early_stopping_params.get('mode', 'max'),
             min_delta=early_stopping_params.get('min_delta', 0),
-            verbose=early_stopping_params.get('verbose', True)
+            verbose=early_stopping_params.get('verbose', True),
+            state_path=str(early_state_path) if early_state_path is not None else None # NEW
         )
         logging.info(f"Early stopping initialized: patience={early_stopping.patience}, "
                     f"mode={early_stopping.mode}, min_delta={early_stopping.min_delta}")
@@ -390,7 +516,15 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
             
             # Calculate progress logging points
             total_batches = len(dataloaders[phase])
-            log_every_n_batches = max(1, min(10, total_batches // 20))
+            # log_every_n_batches = max(1, min(10, total_batches // 20))
+            # Compact logging milestones (in batches)
+            pct_marks = [0.10, 0.25, 0.50, 0.75, 1.00]
+            milestones = set()
+            for p in pct_marks:
+                # convert to a concrete batch index; ensure it's in-range
+                idx = max(0, min(total_batches - 1, int(round(p * total_batches) - 1)))
+                milestones.add(idx)
+            milestones = sorted(milestones)
             
             if rank == 0:
                 logging.info(f"{phase} phase: total {total_batches} batches")
@@ -399,10 +533,28 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
             batch_start = time.time()
             for batch_idx, (inputs, labels) in enumerate(dataloaders[phase]):
                 # Log progress periodically
-                if rank == 0 and (batch_idx % log_every_n_batches == 0 or batch_idx == total_batches - 1):
-                    progress = 100.0 * batch_idx / total_batches
-                    logging.info(f"{phase} Epoch {epoch}/{num_epochs-1}: {progress:.1f}% ({batch_idx}/{total_batches})")
+                # if rank == 0 and (batch_idx % log_every_n_batches == 0 or batch_idx == total_batches - 1):
+                #     progress = 100.0 * batch_idx / total_batches
+                #     logging.info(f"{phase} Epoch {epoch}/{num_epochs-1}: {progress:.1f}% ({batch_idx}/{total_batches})")
                 
+                # Compact milestone logging
+                if rank == 0 and batch_idx in milestones:
+                    done = batch_idx + 1
+                    progress = 100.0 * done / total_batches
+                    avg_loss_so_far = (running['loss'] / max(running['samples'], 1)) if running['samples'] else float('nan')
+                    elapsed = time.time() - phase_start_time
+
+                    # batches per minute and ETA
+                    speed_bpm = (done / max(elapsed, 1e-6)) * 60.0
+                    eta_min = (total_batches - done) / max(speed_bpm, 1e-6)
+
+                    logging.info(
+                        f"{phase} {epoch+1}/{num_epochs} | "
+                        f"{progress:5.1f}% ({done}/{total_batches}) | "
+                        f"avg_loss={avg_loss_so_far:.4f} | "
+                        f"{speed_bpm:.2f} bpm | ETA={eta_min:.1f} min"
+                    )
+
                 # Measure data loading time
                 timing['data'] += time.time() - batch_start
                 
@@ -635,13 +787,27 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
                     logging.debug(f"Error getting cache stats: {str(e)}")
         
         # Check early stopping based on validation metrics
-        if early_stopping and 'val' in phase_results and rank == 0:
-            metric_name = early_stopping_params.get('metric', 'f1_score')
-            metric_value = phase_results['val'].get(metric_name, 0.0)
+        # if early_stopping and 'val' in phase_results and rank == 0:
+        #     metric_name = early_stopping_params.get('metric', 'f1_score')
+        #     metric_value = phase_results['val'].get(metric_name, 0.0)
             
-            # Call early stopping to check if we should stop
-            if early_stopping(epoch, metric_value):
-                logging.info(f"Early stopping triggered at epoch {epoch}")
+        #     # Call early stopping to check if we should stop
+        #     if early_stopping(epoch, metric_value):
+        #         logging.info(f"Early stopping triggered at epoch {epoch}")
+        #         break
+
+        # Early stopping (DDP-safe): compute on rank 0, broadcast stop flag to all
+        stop_now = torch.tensor([0], device=device)
+        if early_stopping and 'val' in phase_results:
+            if rank == 0:
+                metric_name  = early_stopping_params.get('metric', 'f1_score')
+                metric_value = phase_results['val'].get(metric_name, 0.0)
+                if early_stopping(epoch, metric_value):
+                    logging.info(f"Early stopping triggered at epoch {epoch}")
+                    stop_now[0] = 1
+            if world_size > 1:
+                dist.broadcast(stop_now, src=0)
+            if stop_now.item() == 1:
                 break
         
         # Save checkpoints and update best models (rank 0 only)
@@ -667,6 +833,29 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
                     best_metrics[metric] = val_metrics[metric_key]
                     metrics_improved[metric] = True
                     
+                    best_details[metric] = {
+                        "epoch": epoch,
+                        "metric_value": val_metrics[metric_key],
+                        "accuracy": val_metrics["accuracy"],
+                        "f1": val_metrics["f1_score"],
+                        "balanced_acc": val_metrics["balanced_accuracy"],
+                        "auc": val_metrics["auc"],
+                        "sensitivity": val_metrics["sensitivity"],
+                        "specificity": val_metrics["specificity"],
+                        "confusion": phase_results["val"]["confusion_matrix"],  # {'TP','FP','FN','TN'}
+                    }
+                    # NEW: persist best_details immediately
+                    if best_details_path is not None:
+                        try:
+                            tmp = str(best_details_path) + ".tmp"
+                            with open(tmp, "w") as _f:
+                                import json as _json
+                                _json.dump(best_details, _f, indent=2)
+                            import os as _os
+                            _os.replace(tmp, best_details_path)
+                        except Exception as e:
+                            logging.warning(f"Failed to save best_details: {e}")
+
                     # Create checkpoint file path
                     best_models[metric] = os.path.join(checkpoint_dir, f"best_{metric}_model.pth")
                     
@@ -688,7 +877,10 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
                             'specificity': val_metrics['specificity'],
                             'f1_score': val_metrics['f1_score'],
                             'balanced_accuracy': val_metrics['balanced_accuracy'],
-                            'auc': val_metrics['auc']
+                            'auc': val_metrics['auc'],
+                            # NEW: store confusion to allow reconstruction if JSON missing
+                            'confusion_matrix': phase_results['val']['confusion_matrix'],
+                            'improved_metric': metric
                         }
                     }
                     
@@ -746,7 +938,18 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
         logging.info(f'Training complete in {int(hours)}h {int(minutes)}m {seconds:.2f}s')
         logging.info(f'Best val Acc: {best_metrics["acc"]:.6f}, Best val F1: {best_metrics["f1"]:.6f}')
         logging.info(f'Best val Balanced Acc: {best_metrics["balanced_acc"]:.6f}, Best val AUC: {best_metrics["auc"]:.6f}')
-        
+        for metric_name, info in best_details.items():
+            if info is None:
+                continue
+            cm = info["confusion"]
+            logging.info(
+                f"[Best {metric_name}] "
+                f"epoch={info['epoch']} | value={info['metric_value']:.6f} | "
+                f"F1={info['f1']:.6f} | BalAcc={info['balanced_acc']:.6f} | AUC={info['auc']:.6f} | "
+                f"Sens={info['sensitivity']:.6f} | Spec={info['specificity']:.6f} | "
+                f"TP={cm['TP']} FP={cm['FP']} FN={cm['FN']} TN={cm['TN']}"
+            )
+
         # Load best model weights based on balanced accuracy
         if checkpoint_dir:
             best_balanced_acc_path = os.path.join(checkpoint_dir, "best_balanced_acc_model.pth")
