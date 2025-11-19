@@ -137,13 +137,13 @@ def train_on_device(rank, world_size, config):
             "train": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "train.csv",
-                img_dir="clean_dataset_07012025", # default: Exports_02052025
+                img_dir=config.data.img_dir, # default: Exports_02052025
                 transform=train_transform
             ),
             "val": JoslinData(
                 data_dir=config.data.data_dir,
                 annotations_file=config.data.annotations_file_name + "val.csv",
-                img_dir="clean_dataset_07012025", # default: Exports_02052025
+                img_dir=config.data.img_dir, # default: Exports_02052025
                 transform=val_transform
             )
         }
@@ -176,7 +176,7 @@ def train_on_device(rank, world_size, config):
         weighted_sampler_cfg = getattr(config.data, 'weighted_sampler', {})
         use_weighted = weighted_sampler_cfg.get('enabled', False)
         target_ratio = weighted_sampler_cfg.get('target_minority_ratio', 0.14)
-        generator_seed = weighted_sampler_cfg.get('generator_seed', 42)
+        # generator_seed = weighted_sampler_cfg.get('generator_seed', 42)
 
         dataset_time = time.time() - dataset_start_time
         if rank == 0:
@@ -200,9 +200,9 @@ def train_on_device(rank, world_size, config):
         if rank == 0:
             logger.info(f"Using WeightedRandomSampler with target minority ratio: {target_ratio}")
 
-        # label_map = joslin_data["train"].dataset.label_map
-        # labels = [label_map[l] for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
-        labels = [l for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+        label_map = joslin_data["train"].dataset.label_map
+        labels = [label_map[l] for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
+        # labels = [l for l in joslin_data["train"].dataset.img_labels.iloc[:, 1]]
 
         n_major = sum(1 for l in labels if l == 0)
         n_minor = len(labels) - n_major
@@ -212,10 +212,16 @@ def train_on_device(rank, world_size, config):
         weights = [weight_major if l == 0 else weight_minor for l in labels]
 
         # Deterministic sampling
-        generator = torch.Generator()
-        generator.manual_seed(generator_seed)
-
-        weighted_sampler = WeightedRandomSampler(weights, num_samples=len(labels), replacement=True, generator=generator)
+        # generator = torch.Generator()
+        # generator.manual_seed(generator_seed)
+        
+        num_samples = getattr(config.data.weighted_sampler, "num_samples", None)
+        if num_samples is None:
+            num_samples = len(labels)
+        # weighted_sampler = WeightedRandomSampler(weights, num_samples=num_samples, replacement=True, generator=generator)
+        weighted_sampler = WeightedRandomSampler(
+            weights, num_samples=num_samples, replacement=True
+        )
         sampled_indices = list(weighted_sampler)
 
         if rank == 0:
@@ -233,7 +239,7 @@ def train_on_device(rank, world_size, config):
             num_replicas=world_size,
             rank=rank,
             shuffle=True,
-            seed=42
+            # seed=42
         )
     else:
         train_sampler = DistributedSampler(
@@ -241,7 +247,7 @@ def train_on_device(rank, world_size, config):
             num_replicas=world_size,
             rank=rank,
             shuffle=config.data.shuffle,
-            seed=42
+            # seed=42
         )
 
     # Create samplers for distributed training
@@ -252,7 +258,7 @@ def train_on_device(rank, world_size, config):
             num_replicas=world_size,
             rank=rank,
             shuffle=False,
-            seed=42
+            # seed=42
         )
     }
     
@@ -550,21 +556,52 @@ def run(config):
     print(f"Using image resolution: {resolution}x{resolution}")
     
     # Handle checkpoint directory
-    if hasattr(config.exp, 'checkpoint_dir'):
+    # if hasattr(config.exp, 'checkpoint_dir'):
+    #     checkpoint_dir = config.exp.checkpoint_dir
+        
+    #     # Create parent directories if they don't exist
+    #     os.makedirs(os.path.dirname(checkpoint_dir), exist_ok=True)
+        
+    #     # Check if directory exists and clear it
+    #     if os.path.exists(checkpoint_dir) and config.exp.checkpoint_name is None:
+    #         logging.info(f"Checkpoint directory exists at {checkpoint_dir}, clearing contents...")
+    #         safe_clear_directory(checkpoint_dir)
+    #         logging.info(f"Checkpoint directory cleared successfully.")
+        
+    #     # Create the directory (or recreate if just cleared)
+    #     os.makedirs(checkpoint_dir, exist_ok=True)
+    #     logging.info(f"Checkpoint directory prepared at {checkpoint_dir}")
+    
+    # --- Handle checkpoint directory (SAFE: do not auto-clear if resuming) ---
+    if hasattr(config, 'exp') and hasattr(config.exp, 'checkpoint_dir'):
         checkpoint_dir = config.exp.checkpoint_dir
-        
-        # Create parent directories if they don't exist
+
+        # Ensure parent exists
         os.makedirs(os.path.dirname(checkpoint_dir), exist_ok=True)
-        
-        # Check if directory exists and clear it
-        if os.path.exists(checkpoint_dir) and config.exp.checkpoint_name is None:
-            logging.info(f"Checkpoint directory exists at {checkpoint_dir}, clearing contents...")
+
+        # Detect resume signals
+        es_state   = os.path.join(checkpoint_dir, "early_stop_state.json")
+        ckpt_last  = os.path.join(checkpoint_dir, "checkpoint_last.pt")
+        ckpt_best  = os.path.join(checkpoint_dir, "checkpoint_best.pt")  # kept for future use
+        best_general = os.path.join(checkpoint_dir, "best_model.pth")
+        best_balacc  = os.path.join(checkpoint_dir, "best_balanced_acc_model.pth")
+        has_epoch_ckpts = any(
+            name.startswith("epoch_") and name.endswith(".pth")
+            for name in os.listdir(checkpoint_dir)
+        ) if os.path.isdir(checkpoint_dir) else False
+        has_resume = any(os.path.isfile(p) for p in (es_state, ckpt_last, ckpt_best, best_general, best_balacc)) or has_epoch_ckpts
+
+        # Only clear if user *explicitly* opted in or it's truly a fresh run
+        clear_flag = bool(getattr(config.exp, 'clear_before_train', False))
+        if os.path.exists(checkpoint_dir) and (not has_resume) and clear_flag and config.exp.checkpoint_name is None:
+            logging.info(f"[SAFE CLEAR] Clearing contents of {checkpoint_dir} (no resume signals found; user opted in).")
             safe_clear_directory(checkpoint_dir)
-            logging.info(f"Checkpoint directory cleared successfully.")
-        
-        # Create the directory (or recreate if just cleared)
+        else:
+            logging.info(f"[SAFE PREP] Keeping existing files in {checkpoint_dir} (resume signals or no clear flag).")
+
         os.makedirs(checkpoint_dir, exist_ok=True)
-        logging.info(f"Checkpoint directory prepared at {checkpoint_dir}")
+        logging.info(f"Checkpoint directory ready at {checkpoint_dir}")
+    # --- END SAFE BLOCK ---
     
     # Configure main logging
     main_log_file = os.path.join(
