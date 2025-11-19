@@ -96,7 +96,7 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
         ])
     elif augmentation_strength == 'moderate':
         train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(resolution, scale=(0.85, 1.0)),
+            # transforms.RandomResizedCrop(resolution, scale=(0.85, 1.0)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(15),
@@ -105,9 +105,39 @@ def get_transforms(augmentation_strength='moderate', resolution=224):
             transforms.ToTensor(),
             # transforms.RandomErasing(p=0.1, scale=(0.02, 0.1)), # Make sure augmentation is valid from the clinical perspective
         ])
+    elif augmentation_strength == 'horizontal_flip':
+        train_transform = transforms.Compose([
+            transforms.Resize((resolution, resolution)),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+        ])
+    elif augmentation_strength == 'vertical_flip':
+        train_transform = transforms.Compose([
+            transforms.Resize((resolution, resolution)),
+            transforms.RandomVerticalFlip(),
+            transforms.ToTensor(),
+        ])
+    elif augmentation_strength == 'random_rotation':
+        train_transform = transforms.Compose([
+            transforms.Resize((resolution, resolution)),
+            transforms.RandomRotation(15),
+            transforms.ToTensor(),
+        ])
+    elif augmentation_strength == 'color_jitter':
+        train_transform = transforms.Compose([
+            transforms.Resize((resolution, resolution)),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),
+            transforms.ToTensor(),
+        ])
+    elif augmentation_strength == 'random_affine':
+        train_transform = transforms.Compose([
+            transforms.Resize((resolution, resolution)),
+            transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),
+            transforms.ToTensor(),
+        ])
     elif augmentation_strength == 'strong':
         train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(resolution, scale=(0.75, 1.0)),
+            # transforms.RandomResizedCrop(resolution, scale=(0.75, 1.0)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(30),
