@@ -46,19 +46,45 @@ def configure_logging(log_dir):
     
     return logger
 
-def load_model(checkpoint_path, model_name="vit_base_patch16_224", num_classes=2, device="cuda"):
+def load_model(checkpoint_path, model_name=None, num_classes=None, img_size=None, device="cuda"):
     """Load model from checkpoint"""
-    model = create_model(model_name, pretrained=False, num_classes=num_classes, img_size=1000)
-    
-    # Load weights
     checkpoint = torch.load(checkpoint_path, map_location=device)
+    # Try to read training metadata if present
+    ckpt_model_name = None
+    ckpt_num_classes = None
+    ckpt_img_size = None
+    if isinstance(checkpoint, dict):
+        ckpt_model_name = checkpoint.get("model_name")
+        ckpt_num_classes = checkpoint.get("num_classes")
+        # some projects store input size as tuple/list under 'img_size' or 'input_size'
+        ckpt_img_size = checkpoint.get("img_size") or checkpoint.get("input_size")
+
+    # Resolve effective params
+    eff_model_name = model_name or ckpt_model_name or "vit_base_patch16_224"
+    eff_num_classes = int(num_classes if num_classes is not None else (ckpt_num_classes if ckpt_num_classes is not None else 2))
+    eff_img_size = img_size or ckpt_img_size or 224  # ViT cares; Swin generally ignores
+
+    # Build the SAME architecture used at train time
+    # (timm will ignore img_size for some models like Swin; that's OK)
+    model = create_model(eff_model_name, pretrained=False, num_classes=eff_num_classes, img_size=eff_img_size)
+
+    # Load weights dictionary
     model_state_dict = checkpoint.get('model_state_dict', checkpoint)
-    
+ 
     # Handle DDP prefix
     if all(k.startswith('module.') for k in model_state_dict.keys()):
-        model_state_dict = {k[7:]: v for k, v in model_state_dict.items()}
-    
-    model.load_state_dict(model_state_dict)
+        model_state_dict = {k[len('module.'):]: v for k, v in model_state_dict.items()}
+    # Handle optional 'model.' prefix used by some training loops
+    if all(k.startswith('model.') for k in model_state_dict.keys()):
+        model_state_dict = {k[len('model.'):]: v for k, v in model_state_dict.items()}
+ 
+    # Strict load first; if head size differs, retry non-strict so we can at least evaluate features
+    try:
+        model.load_state_dict(model_state_dict, strict=True)
+    except Exception as e:
+        logging.warning(f"Strict load failed ({e}); retrying with strict=False")
+        model.load_state_dict(model_state_dict, strict=False)
+
     model = model.to(device).eval()
     
     # Log model details
@@ -73,7 +99,7 @@ def load_model(checkpoint_path, model_name="vit_base_patch16_224", num_classes=2
     
     return model
 
-def load_test_dataset(data_dir, annotations_file, resolution=1000):
+def load_test_dataset(data_dir, annotations_file, img_dir, resolution=1000):
     """Load test dataset"""
     transforms_dict = get_transforms('none', resolution=resolution)
     
@@ -81,7 +107,7 @@ def load_test_dataset(data_dir, annotations_file, resolution=1000):
     test_dataset = JoslinData(
         data_dir=data_dir,
         annotations_file=annotations_file,
-        img_dir="Exports_02052025",
+        img_dir=img_dir,
         transform=transforms_dict['val']
     )
     
@@ -273,6 +299,7 @@ def main():
     parser.add_argument('--data_dir', type=str, required=True, help='Path to data directory')
     parser.add_argument('--annotations_file', type=str, default='referable_img_grades_test.csv',
                         help='Name of test annotations file')
+    parser.add_argument('--img_dir', type=str, default='Exports_02052025', help='Name of image directory')
     parser.add_argument('--output_dir', type=str, default='inference_results',
                         help='Directory to save inference results')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for inference')
@@ -280,6 +307,11 @@ def main():
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu',
                         help='Device to run inference on')
     parser.add_argument('--resolution', type=int, default=1000, help='Image resolution')
+    parser.add_argument('--model_name', type=str, default=None, help='timm model name to instantiate (e.g., swinv2_large_window12to16_192to256.ms_in22k_ft_in1k)')
+    # optional: allow overriding num_classes/img_size from CLI if needed
+    parser.add_argument('--override_num_classes', type=int, default=None, help='Override num_classes if not embedded in checkpoint')
+    parser.add_argument('--override_img_size', type=int, default=None, help='Override img_size for ViT-like models')
+
     
     args = parser.parse_args()
     
@@ -304,8 +336,14 @@ def main():
     
     try:
         # Load model and dataset
-        model = load_model(args.checkpoint, device=device)
-        test_dataset = load_test_dataset(args.data_dir, args.annotations_file, resolution=args.resolution)
+        model = load_model(
+            args.checkpoint,
+            model_name=args.model_name,
+            num_classes=args.override_num_classes,
+            img_size=args.override_img_size or args.resolution,
+            device=device
+        )
+        test_dataset = load_test_dataset(args.data_dir, args.annotations_file, args.img_dir, resolution=args.resolution)
         
         # Create data loader
         test_loader = DataLoader(

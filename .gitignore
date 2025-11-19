@@ -2,11 +2,8 @@
 *__pycache__
 
 # folders
-*tutorials
-*data
-*outputs
-*checkpoints
-*old_code_version
 *scripts
-*visualizations
+*sbatch_templates
+*config
 *inference_results
+*outputs
