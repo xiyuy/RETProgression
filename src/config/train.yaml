@@ -1,5 +1,5 @@
 # Global variable for run identification
-run_id: 1  # Change this to create different experiment runs
+run_id: 2  # Change this to create different experiment runs
 
 caching:
   enabled: true
@@ -16,9 +16,10 @@ criterion:
   
 data:
   annotations_file_name: /projects/retprogression/gradable_dr/clean_gradable_dr_${run_id}_
+  data:
   augmentation:
     enabled: true
-    strength: moderate
+    type: 'none'  # 'none', 'vflip', 'hflip', 'affine', 'color', 'all'
   batch_size: 32
   class_labels: gradable_binary_DR
   data_dir: /projects/retprogression/
@@ -30,7 +31,7 @@ data:
     enabled: false
     generator_seed: 42
     target_minority_ratio: 0.20
-    
+    amp_enabled: false
 distributed:
   backend: nccl
   world_size: 1
@@ -58,10 +59,10 @@ experiment_res_1024:
       type: none
     batch_size: 10
     resolution: 1024
-    img_dir: complete_cropped_1024_centered_wt_10272025_allRight
+    img_dir: cropped_dataset_07082025_wt_allRight
   exp:
-    checkpoint_dir: /projects/retprogression/rgarridogarcia/checkpoints/cropped1024_cropped_centered_wt_allR_${run_id}
-    checkpoint_name: ''
+    checkpoint_dir: /projects/retprogression/rgarridogarcia/checkpoints/1024_Blackcropped_wt_allR_${run_id}
+    checkpoint_name: epoch_16.pth
     experiment_name: swinv2_res1024
     num_epochs: 25
   lr_scheduler:

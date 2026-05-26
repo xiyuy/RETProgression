@@ -5,7 +5,7 @@
 #SBATCH --time=8:00:00
 #SBATCH --gres=gpu:h200:1
 #SBATCH --cpus-per-task=7
-#SBATCH --mem-per-cpu=16G
+#SBATCH --mem-per-cpu=8G
 #SBATCH --mail-user=r.garridogarcia@northeastern.edu # Email
 #SBATCH --mail-type=ALL # Type of email notifications
 

@@ -677,6 +677,9 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
             # Save improved models
             for metric, path in best_models.items():
                 try:
+                    # Get confusion matrix from validation phase
+                    val_cm = phase_results['val']['confusion_matrix']
+                    
                     checkpoint = {
                         'epoch': epoch,
                         'model_state_dict': model.state_dict(),
@@ -688,7 +691,11 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
                             'specificity': val_metrics['specificity'],
                             'f1_score': val_metrics['f1_score'],
                             'balanced_accuracy': val_metrics['balanced_accuracy'],
-                            'auc': val_metrics['auc']
+                            'auc': val_metrics['auc'],
+                            'TP': val_cm['TP'],      # ← ADD
+                            'FP': val_cm['FP'],      # ← ADD
+                            'FN': val_cm['FN'],      # ← ADD
+                            'TN': val_cm['TN']       # ← ADD
                         }
                     }
                     
@@ -705,13 +712,28 @@ def train_model_custom_progress(dataloaders, dataset_sizes, model, criterion, op
             # Save epoch checkpoint
             epoch_path = os.path.join(checkpoint_dir, f"epoch_{epoch}.pth")
             try:
+                # Get confusion matrices
+                val_cm = phase_results['val']['confusion_matrix']
+                
                 checkpoint = {
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     **{f'best_{k}': v for k, v in best_metrics.items()},
                     **{f'train_{k}': v for k, v in phase_results['train'].items() if k != 'confusion_matrix' and k != 'time'},
-                    **{f'val_{k}': v for k, v in phase_results['val'].items() if k != 'confusion_matrix' and k != 'time'}
+                    **{f'val_{k}': v for k, v in phase_results['val'].items() if k != 'confusion_matrix' and k != 'time'},
+                    'metrics': {
+                        'accuracy': val_metrics['accuracy'],
+                        'sensitivity': val_metrics['sensitivity'],
+                        'specificity': val_metrics['specificity'],
+                        'f1_score': val_metrics['f1_score'],
+                        'balanced_accuracy': val_metrics['balanced_accuracy'],
+                        'auc': val_metrics['auc'],
+                        'TP': val_cm['TP'],      # ← ADD
+                        'FP': val_cm['FP'],      # ← ADD  
+                        'FN': val_cm['FN'],      # ← ADD
+                        'TN': val_cm['TN']       # ← ADD
+                    }
                 }
                 torch.save(checkpoint, epoch_path)
                 logging.info(f"Saved epoch checkpoint at {epoch_path}")

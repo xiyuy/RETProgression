@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J val_inference_1024_oversample50 # Job name
+#SBATCH -J gradable_dr_new_5k_clean_test_cropped_centered_wt_allR_4 # Job name
 #SBATCH -p sharing
 #SBATCH -N 1 # Number of nodes
 #SBATCH --time=1:00:00  # Inference is much faster than training
@@ -23,18 +23,19 @@ echo "CUDA available: $(python -c 'import torch; print(torch.cuda.is_available()
 echo "GPU count: $(python -c 'import torch; print(torch.cuda.device_count())')"
 
 # Change to source directory
-cd /home/r.garridogarcia/MIGHTE/retprogression/swinV2/RETProgression/results_analysis
+cd /home/r.garridogarcia/MIGHTE/retprogression/swinV2/RETProgression/src
 
 # Force single GPU mode
 export CUDA_VISIBLE_DEVICES=0
 echo "Visible GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Configuration - MODIFY THESE PATHS AS NEEDED
-CHECKPOINT_PATH="/projects/retprogression/rgarridogarcia/checkpoints/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth"
+PARTITION_ID=1
+CHECKPOINT_PATH="/projects/retprogression/rgarridogarcia/checkpoints/1024_Blackcropped_wt_allR_${PARTITION_ID}/best_balanced_acc_model.pth" #cropped1024_cropped_centered_wt_allR_
 DATA_DIR="/projects/retprogression/"
-IMG_DIR="clean_dataset_0701202"   # <-- set this to whatever folder you want
-ANNOTATIONS_FILE="gradable_dr_val.csv"
-OUTPUT_DIR="/projects/retprogression/rgarridogarcia/complete_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter"
+IMG_DIR="complete_cropped_1024_centered_wt_10272025_allRight"   # <-- set this to whatever folder you want
+ANNOTATIONS_FILE="/gradable_dr/clean_gradable_dr_${PARTITION_ID}_test.csv"
+OUTPUT_DIR="/projects/retprogression/rgarridogarcia/gradable_dr_test/gradable_dr_test_cropped_centered_wt_allR_${PARTITION_ID}_${TIMESTAMP}"
 BATCH_SIZE=8  # Smaller batch size for inference safety
 NUM_WORKERS=4
 RESOLUTION=1024
@@ -84,7 +85,7 @@ python validation_inference.py \
   --resolution $RESOLUTION \
   --model_name "$MODEL_NAME" \
   --img_size $IMG_SIZE \
-  --img_dir "$IMG_DIR" \           # <-- pass it here
+  --img_dir "$IMG_DIR" \      
   --device cuda
 
 # Check if inference completed successfully

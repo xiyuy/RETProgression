@@ -1,12 +1,12 @@
 #!/bin/bash
 # validation_inference.sh - Run model predictions with robust error handling
 
-#SBATCH -J ret_inference_h100          # Job name
+#SBATCH -J cropped1024_cropped_centered_wt_allR_1       # Job name
 #SBATCH -p gpu                         # GPU partition
 #SBATCH -N 1                           # Single node
-#SBATCH --gres=gpu:h200:1              # Request one H100 GPU (adjust name if different)
+#SBATCH --gres=gpu:v100-sxm2:1              # Request one H100 GPU (adjust name if different)
 #SBATCH --cpus-per-task=8              # Number of CPU threads for data loading
-#SBATCH --mem=48G                      # System memory (increase if needed)
+#SBATCH --mem=6G                     # System memory (increase if needed)
 #SBATCH --time=4:00:00                 # Max runtime (extendable if large dataset)
 #SBATCH --output=slurm-%j.out          # Standard output log
 #SBATCH --error=slurm-%j.err           # Standard error log
@@ -26,21 +26,22 @@ export PYTHONPATH="${REPO_DIR}/src:${PYTHONPATH:-}"
 # Model settings
 MODEL_NAME="swinv2_large_window12to16_192to256.ms_in22k_ft_in1k"
 IMG_SIZE=1024
-BATCH_SIZE=32
+BATCH_SIZE=4
 NUM_WORKERS=0  # Set to 0 to avoid multiprocessing issues
 
 # Dataset settings
 DATA_DIR="${BASE_DIR}"
-ANNOTATIONS_FILE="clean_gradable_dr_test.csv"
-IMG_DIR="cropped1024_brightness_noresize_dataset_08202025"
+PARTITION_ID=5
+ANNOTATIONS_FILE="gradable_dr/clean_gradable_dr_${PARTITION_ID}_test.csv" #"estenda-ihs-test-set_ungradable.csv"  #gradable_dr/clean_gradable_dr_${PARTITION_ID}_test.csv #"gradable_dr_test800igames.csv" #"gradable_dr_new_5k_clean_test.csv"
+IMG_DIR="complete_cropped_1024_centered_wt_10272025_allRight" #"test_cropped1024_wt_10272025" #"estenda-ihs-test-set_centered_wt" #"test_dataset_10032025_blackcropped_wt_allRight" #"test_cropped1024_wt_10272025_allRight" #"complete_cropped_1024_centered_wt_10272025_allRight" #"joslin_centered_1024_wt_12012025"
 
 # Checkpoint settings
 CHECKPOINT_DIR="${BASE_DIR}/rgarridogarcia/checkpoints"
-CHECKPOINT_PATH="${CHECKPOINT_DIR}/clean_gradable_swinv2_resolution1024_oversample50_RetinaCropped_BrightnessFilter/best_balanced_acc_model.pth"
+CHECKPOINT_PATH="${CHECKPOINT_DIR}/cropped1024_cropped_centered_wt_allR_${PARTITION_ID}/best_balanced_acc_model.pth" #cropped1024_cropped_centered_wt_allR_ #1024_Blackcropped_wt_allR_
 
 # Output directory with timestamp
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTPUT_DIR="${BASE_DIR}/rgarridogarcia/clean_dr_test_inference_${TIMESTAMP}"
+OUTPUT_DIR="${BASE_DIR}/rgarridogarcia/rerun_5k_best_models/test_cropped1024_cropped_centered_wt_allR_${PARTITION_ID}" #gradable_dr_800images_cropped_centered_wt_allR_${PARTITION_ID}" #cropped_centered_wt_allR_
 
 # Function to print colored messages
 print_info() {
@@ -141,7 +142,6 @@ python validation_inference.py \
     --num_workers ${NUM_WORKERS} \
     --output_dir "${OUTPUT_DIR}" \
     --device ${DEVICE} \
-    --no_resize
 
 # Check if prediction was successful
 if [ $? -eq 0 ]; then
